@@ -1,0 +1,8 @@
+avalon-frontend/node_modules/
+avalon-frontend/build/
+avalon-backend/venv/
+avalon-backend/avalon.db
+avalon-backend/app/static/uploads/
+avalon-backend/.env
+__pycache__/
+*.pyc
