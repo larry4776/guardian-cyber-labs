@@ -1,0 +1,16 @@
+export const countries = [
+  { name: "Bénin", code: "+229" },
+  { name: "Togo", code: "+228" },
+  { name: "Côte d'Ivoire", code: "+225" },
+  { name: "Sénégal", code: "+221" },
+  { name: "Burkina Faso", code: "+226" },
+  { name: "Mali", code: "+223" },
+  { name: "Niger", code: "+227" },
+  { name: "Nigeria", code: "+234" },
+  { name: "Ghana", code: "+233" },
+  { name: "Cameroun", code: "+237" },
+  { name: "France", code: "+33" },
+  { name: "États-Unis", code: "+1" },
+  { name: "Canada", code: "+1" },
+  { name: "Autre", code: "+" },
+];
