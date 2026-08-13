@@ -8,4 +8,6 @@ python-multipart==0.0.19
 bcrypt==4.0.1
 email-validator
 reportlab
-fastapi-mail
+fastapi-mail==1.4.1
+pydantic-settings==2.1.0
+qrcode[pil]
