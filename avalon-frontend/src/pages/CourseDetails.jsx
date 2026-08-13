@@ -7,6 +7,7 @@ import SubmissionBlock from '../components/SubmissionBlock';
 import Navbar from '../components/Navbar';
 import { LanguageContext } from '../context/LanguageContext';
 import { AuthContext } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { API_URL } from '../config';
 
 const DOMAIN_LABELS = {
@@ -20,10 +21,21 @@ const LEVEL_LABELS = {
   advanced: { fr: 'Avancé', en: 'Advanced' },
 };
 
+const getCourseImage = (course) => {
+  if (course.thumbnail_url) return course.thumbnail_url;
+  const domainImages = {
+    red_team: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600',
+    blue_team: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600',
+    grc: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  };
+  return domainImages[course.domain] || 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600';
+};
+
 const CourseDetails = () => {
   const { id } = useParams();
   const { language, t } = useContext(LanguageContext);
   const { token } = useContext(AuthContext);
+  const { formatPrice } = useSettings();
   const fr = language === 'fr';
 
   const [course, setCourse] = useState(null);
@@ -48,7 +60,12 @@ const CourseDetails = () => {
       .catch(() => setExercises([]));
   }, [id, token]);
 
-  if (loading) return <div className="min-h-screen text-white"><Navbar /><p className="text-muted text-sm text-center py-32">{fr ? 'Chargement...' : 'Loading...'}</p></div>;
+  if (loading) return (
+    <div className="min-h-screen text-white">
+      <Navbar />
+      <p className="text-muted text-sm text-center py-32">{fr ? 'Chargement...' : 'Loading...'}</p>
+    </div>
+  );
 
   if (error || !course) {
     return (
@@ -80,7 +97,7 @@ const CourseDetails = () => {
         </div>
 
         <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden mb-8 border border-white/10">
-          <img src={course.thumbnail_url || 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200'} alt={t(course, 'title_fr', 'title_en')} className="w-full h-full object-cover" />
+          <img src={getCourseImage(course)} alt={t(course, 'title_fr', 'title_en')} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-base via-transparent to-transparent"></div>
           {course.is_bestseller && <span className="absolute top-4 left-4 bg-amber-400 text-slate-900 text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded">{fr ? 'Meilleure vente' : 'Bestseller'}</span>}
         </div>
@@ -98,7 +115,18 @@ const CourseDetails = () => {
         <p className="text-slate-400 text-sm mb-4 max-w-2xl leading-relaxed">{t(course, 'description_fr', 'description_en')}</p>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted mb-8">
-          {course.instructor_name && <span>{fr ? 'Créé par' : 'Created by'} <span className="text-primary-light font-semibold">{course.instructor_name}</span></span>}
+          {course.instructor_name && (
+            <div className="flex items-center gap-2">
+              {course.instructor_avatar ? (
+                <img src={course.instructor_avatar} alt={course.instructor_name} className="w-8 h-8 rounded-full object-cover border-2 border-primary/30" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary-light text-sm font-bold">
+                  {course.instructor_name[0]?.toUpperCase()}
+                </div>
+              )}
+              <span>{fr ? 'Créé par' : 'Created by'} <span className="text-primary-light font-semibold">{course.instructor_name}</span></span>
+            </div>
+          )}
           {course.students_count > 0 && <span>{course.students_count} {fr ? 'participants' : 'students'}</span>}
         </div>
 
@@ -144,7 +172,9 @@ const CourseDetails = () => {
         <div className="flex items-center justify-between bg-surface border border-white/10 rounded-2xl p-6">
           <div>
             <span className="text-[11px] text-muted uppercase tracking-wide block mb-1">{fr ? 'Tarif' : 'Price'}</span>
-            <span className="font-display text-xl font-bold text-primary-light">{course.is_free ? (fr ? 'Gratuit' : 'Free') : `$${course.price}`}</span>
+            <span className="font-display text-xl font-bold text-primary-light">
+              {formatPrice(course.price, course.is_free, language)}
+            </span>
           </div>
           <button onClick={() => setSelectedCourse(course)} className="bg-gradient-to-r from-primary to-primary-dark hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] text-white font-semibold px-8 py-3 rounded-lg text-sm transition-shadow">
             {course.is_free ? (fr ? 'Accéder au parcours' : 'Access course') : (fr ? "Débloquer l'accès à vie" : 'Unlock lifetime access')}

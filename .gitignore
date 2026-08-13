@@ -6,3 +6,6 @@ avalon-backend/app/static/uploads/
 avalon-backend/.env
 __pycache__/
 *.pyc
+
+# Local Netlify folder
+.netlify

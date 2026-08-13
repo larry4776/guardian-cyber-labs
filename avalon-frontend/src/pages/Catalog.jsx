@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, Clock } from 'lucide-react';
 import PaymentModal from '../components/paymentModal';
 import Navbar from '../components/Navbar';
 import { LanguageContext } from '../context/LanguageContext';
+import { useSettings } from '../context/SettingsContext';
 import { API_URL } from '../config';
 
 const DOMAINS = [
@@ -17,8 +18,31 @@ const LEVELS = [
   { key: 'advanced', label_fr: 'Avancé', label_en: 'Advanced' },
 ];
 
+const getCourseImage = (course) => {
+  if (course.thumbnail_url) return course.thumbnail_url;
+  const domainImages = {
+    red_team: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600',
+    blue_team: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600',
+    grc: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600',
+  };
+  return domainImages[course.domain] || 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600';
+};
+
+const getCourseDuration = (course) => {
+  if (!course.lessons || course.lessons.length === 0) return null;
+  const total = course.lessons.reduce((acc, l) => {
+    const parts = (l.duration || '0:00').split(':').map(Number);
+    return acc + parts[0] * 60 + (parts[1] || 0);
+  }, 0);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  if (h > 0) return `${h}h${m.toString().padStart(2, '0')}`;
+  return `${m} min`;
+};
+
 const Catalog = () => {
   const { language, t } = useContext(LanguageContext);
+  const { formatPrice } = useSettings();
   const fr = language === 'fr';
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +68,12 @@ const Catalog = () => {
 
   const label = (item) => language === 'fr' ? item.label_fr : item.label_en;
 
+  const domainColor = (d) => ({
+    red_team: 'bg-red-500/10 text-red-400 border-red-500/20',
+    blue_team: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    grc: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+  }[d] || 'bg-primary/10 text-primary-light border-primary/20');
+
   return (
     <div className="min-h-screen text-white">
       <Navbar />
@@ -53,11 +83,9 @@ const Catalog = () => {
 
         <div className="relative w-full md:w-96 mb-6">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
-          <input
-            type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder={fr ? 'Rechercher un parcours...' : 'Search a course...'}
-            className="w-full bg-white/[0.03] border border-white/10 rounded-full pl-11 pr-5 py-3 text-sm text-white placeholder:text-muted outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all"
-          />
+            className="w-full bg-white/[0.03] border border-white/10 rounded-full pl-11 pr-5 py-3 text-sm text-white placeholder:text-muted outline-none focus:border-primary/50 transition-all" />
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
@@ -81,41 +109,65 @@ const Catalog = () => {
         {loading ? (
           <p className="text-muted text-sm">{fr ? 'Chargement des parcours...' : 'Loading courses...'}</p>
         ) : error ? (
-          <p className="text-red-400 text-sm">{error} — vérifie que le serveur backend tourne bien sur {API_URL}.</p>
+          <p className="text-red-400 text-sm">{error}</p>
         ) : filtered.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-6">
-            {filtered.map(course => (
-              <div key={course.id} className="group relative bg-surface border border-white/10 rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300 shadow-xl flex flex-col">
-                <div className="relative h-40 overflow-hidden">
-                  <img src={course.thumbnail_url || 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600'} alt={t(course, 'title_fr', 'title_en')} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
-                  {course.is_bestseller && <span className="absolute top-3 left-3 bg-amber-400 text-slate-900 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded">{fr ? 'Meilleure vente' : 'Bestseller'}</span>}
-                </div>
-                <div className="p-6 flex flex-col justify-between flex-1">
-                  <div>
-                    <div className="flex items-center gap-2 mb-3 flex-wrap">
-                      <span className="text-[11px] font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-primary/10 text-primary-light border border-primary/20">
-                        {label(DOMAINS.find(d => d.key === course.domain)) || course.domain}
+            {filtered.map(course => {
+              const duration = getCourseDuration(course);
+              return (
+                <div key={course.id} className="group relative bg-surface border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition-all duration-300 shadow-xl flex flex-col">
+                  <div className="relative h-40 overflow-hidden">
+                    <img src={getCourseImage(course)} alt={t(course, 'title_fr', 'title_en')} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+                    {course.is_bestseller && <span className="absolute top-3 left-3 bg-amber-400 text-slate-900 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded">{fr ? 'Meilleure vente' : 'Bestseller'}</span>}
+                    {duration && (
+                      <span className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-1 rounded-full">
+                        <Clock size={10} /> {duration}
                       </span>
-                      <span className="text-[11px] font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-white/5 text-muted border border-white/10">
-                        {label(LEVELS.find(l => l.key === course.level)) || course.level}
+                    )}
+                  </div>
+                  <div className="p-6 flex flex-col justify-between flex-1">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className={`text-[11px] font-bold uppercase tracking-wide px-3 py-1 rounded-full border ${domainColor(course.domain)}`}>
+                          {label(DOMAINS.find(d => d.key === course.domain)) || course.domain}
+                        </span>
+                        <span className="text-[11px] font-bold uppercase tracking-wide px-3 py-1 rounded-full bg-white/5 text-muted border border-white/10">
+                          {label(LEVELS.find(l => l.key === course.level)) || course.level}
+                        </span>
+                      </div>
+                      <h3 className="font-display text-lg font-bold mb-1 leading-snug group-hover:text-primary-light transition-colors">{t(course, 'title_fr', 'title_en')}</h3>
+                      {course.instructor_name && (
+                        <div className="flex items-center gap-2 mb-2">
+                          {course.instructor_avatar ? (
+                            <img src={course.instructor_avatar} alt={course.instructor_name} className="w-5 h-5 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary-light">
+                              {course.instructor_name[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <p className="text-xs text-muted">{fr ? 'Par' : 'By'} {course.instructor_name}</p>
+                        </div>
+                      )}
+                      <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-2">{t(course, 'description_fr', 'description_en')}</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <Link to={`/course/${course.id}`} className="flex-1 text-center border border-white/10 hover:border-white/30 text-slate-300 hover:text-white font-semibold py-3 rounded-lg text-sm transition-colors">
+                        {fr ? 'Détails' : 'Details'}
+                      </Link>
+                      <button onClick={() => setSelectedCourse(course)} className="flex-1 bg-gradient-to-r from-primary to-primary-dark hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] text-white font-semibold py-3 rounded-lg text-sm transition-shadow">
+                        {course.is_free ? (fr ? 'Accéder' : 'Access') : (fr ? 'Débloquer' : 'Unlock')}
+                      </button>
+                    </div>
+                    <div className="mt-3 text-center">
+                      <span className="font-display text-sm text-primary-light font-bold">
+                        {formatPrice(course.price, course.is_free, language)}
                       </span>
                     </div>
-                    <h3 className="font-display text-lg font-bold mb-1 leading-snug group-hover:text-primary-light transition-colors">{t(course, 'title_fr', 'title_en')}</h3>
-                    {course.instructor_name && <p className="text-xs text-muted mb-2">{fr ? 'Par' : 'By'} {course.instructor_name}</p>}
-                    <p className="text-slate-400 text-sm leading-relaxed mb-6">{t(course, 'description_fr', 'description_en')}</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Link to={`/course/${course.id}`} className="flex-1 text-center border border-white/10 hover:border-white/30 text-slate-300 hover:text-white font-semibold py-3 rounded-lg text-sm transition-colors">
-                      {fr ? 'Détails' : 'Details'}
-                    </Link>
-                    <button onClick={() => setSelectedCourse(course)} className="flex-1 bg-gradient-to-r from-primary to-primary-dark hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] text-white font-semibold py-3 rounded-lg text-sm transition-shadow">
-                      {course.is_free ? (fr ? 'Accéder' : 'Access') : (fr ? 'Débloquer' : 'Unlock')}
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="border border-dashed border-white/10 rounded-2xl p-12 text-center text-muted text-sm">

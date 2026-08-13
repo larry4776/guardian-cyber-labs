@@ -4,7 +4,8 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from app.database import Base, engine
-from app.routers import auth, courses, payments, contact, uploads, admin, payment_methods, categories, exercises, submissions, certificates
+from app.routers import auth, courses, payments, contact, uploads, admin, payment_methods, categories, exercises, submissions, certificates, settings
+
 Base.metadata.create_all(bind=engine)
 
 os.makedirs("app/static/uploads", exist_ok=True)
@@ -32,6 +33,7 @@ app.include_router(categories.router)
 app.include_router(exercises.router)
 app.include_router(submissions.router)
 app.include_router(certificates.router)
+app.include_router(settings.router)
 
 @app.get("/")
 def root():

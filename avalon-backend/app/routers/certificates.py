@@ -7,6 +7,9 @@ from reportlab.lib.pagesizes import landscape, A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
+import qrcode
+import io as _io
 
 from app.database import get_db
 from app.models.certificates import Certificate
@@ -14,6 +17,7 @@ from app.models.course import Course
 from app.models.user import User
 from app.schemas.certificates import CertificateOut, PublicCertificateOut, CertificateVisibility
 from app.core.security import get_current_user, get_current_admin
+from app.core.email import email_certificat
 
 router = APIRouter(prefix="/certificates", tags=["certificates"])
 
@@ -29,6 +33,16 @@ def issue_certificate_if_needed(user_id: int, course_id: int, db: Session):
     db.add(cert)
     db.commit()
     db.refresh(cert)
+
+    student = db.query(User).filter(User.id == user_id).first()
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if student and course:
+        email_certificat(
+            student.first_name or '',
+            student.email,
+            course.title_fr,
+            cert.code
+        )
     return cert
 
 
@@ -112,6 +126,15 @@ def download_certificate_pdf(certificate_id: int, current_user: User = Depends(g
     course = db.query(Course).filter(Course.id == cert.course_id).first()
     student_name = f"{current_user.first_name or ''} {current_user.last_name or ''}".strip() or current_user.email
 
+    verify_url = f"https://guardian-cyber-labs.netlify.app/certificates/verify/{cert.code}"
+    qr = qrcode.QRCode(version=1, box_size=4, border=2)
+    qr.add_data(verify_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="#3B82F6", back_color="#0A0E1A")
+    qr_buffer = _io.BytesIO()
+    qr_img.save(qr_buffer, format='PNG')
+    qr_buffer.seek(0)
+
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=landscape(A4))
     width, height = landscape(A4)
@@ -144,6 +167,11 @@ def download_certificate_pdf(certificate_id: int, current_user: User = Depends(g
     domain_label = DOMAIN_LABELS.get(course.domain, course.domain) if course else ""
     level_label = LEVEL_LABELS.get(course.level, course.level) if course else ""
     c.drawCentredString(width / 2, height / 2 - 1.6 * cm, f"{course.title_fr if course else ''} — {domain_label} · {level_label}")
+
+    qr_size = 2.5 * cm
+    qr_x = width - 1.5 * cm - qr_size - 0.5 * cm
+    qr_y = 1.8 * cm
+    c.drawImage(ImageReader(qr_buffer), qr_x, qr_y, width=qr_size, height=qr_size)
 
     c.setFillColor(HexColor("#64748B"))
     c.setFont("Helvetica", 9)

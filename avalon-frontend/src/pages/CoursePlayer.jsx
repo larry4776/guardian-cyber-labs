@@ -46,7 +46,7 @@ const CoursePlayer = () => {
         playPromise.catch(() => {});
       }
     }
-  }, [activeLessonIndex, course]);
+  }, [activeLessonIndex, course, language]);
 
   const markLessonComplete = async (lessonId) => {
     if (!token) return;
@@ -68,8 +68,21 @@ const CoursePlayer = () => {
     }
   };
 
+  // Choisit automatiquement la bonne vidéo selon la langue
+  const getVideoUrl = (lesson) => {
+    if (language === 'en' && lesson.video_url_en && lesson.video_url_en.trim() !== '') {
+      return lesson.video_url_en;
+    }
+    return lesson.video_url || null;
+  };
+
   if (loading) {
-    return <div className="min-h-screen text-white"><Navbar /><p className="text-muted text-sm text-center py-32">{fr ? 'Chargement...' : 'Loading...'}</p></div>;
+    return (
+      <div className="min-h-screen text-white">
+        <Navbar />
+        <p className="text-muted text-sm text-center py-32">{fr ? 'Chargement...' : 'Loading...'}</p>
+      </div>
+    );
   }
 
   if (error || !course || course.lessons.length === 0) {
@@ -85,6 +98,7 @@ const CoursePlayer = () => {
   }
 
   const activeLesson = course.lessons[activeLessonIndex];
+  const activeVideoUrl = getVideoUrl(activeLesson);
   const hasResume = course.resume_pdf_url && course.resume_pdf_url.trim() !== '';
   const hasTp = course.tp_pdf_url && course.tp_pdf_url.trim() !== '';
   const isLast = activeLessonIndex === course.lessons.length - 1;
@@ -103,6 +117,7 @@ const CoursePlayer = () => {
         <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
           <div className="grid lg:grid-cols-[320px_1fr]">
 
+            {/* Programme à gauche */}
             <div className="border-b lg:border-b-0 lg:border-r border-white/10 max-h-[280px] lg:max-h-[520px] overflow-y-auto">
               <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 sticky top-0 bg-surface/95 backdrop-blur-sm">
                 <h3 className="text-xs font-bold uppercase text-muted tracking-wide">{fr ? 'Programme du parcours' : 'Course curriculum'}</h3>
@@ -112,6 +127,7 @@ const CoursePlayer = () => {
                 {course.lessons.map((lesson, index) => {
                   const isActive = index === activeLessonIndex;
                   const isDone = completedIds.includes(lesson.id);
+                  const videoAvailable = getVideoUrl(lesson);
                   return (
                     <button
                       key={lesson.id}
@@ -128,22 +144,52 @@ const CoursePlayer = () => {
                         )}
                       </span>
                       <span className="flex-1 leading-snug">{t(lesson, 'title_fr', 'title_en')}</span>
-                      <span className="text-[11px] font-mono text-muted shrink-0">{lesson.duration}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {!videoAvailable && (
+                          <span className="text-[9px] font-bold uppercase text-amber-500/70 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                            {fr ? 'Bientôt' : 'Soon'}
+                          </span>
+                        )}
+                        <span className="text-[11px] font-mono text-muted">{lesson.duration}</span>
+                      </div>
                     </button>
                   );
                 })}
               </div>
             </div>
 
+            {/* Lecteur à droite */}
             <div>
-              <div className="bg-black aspect-video flex items-center justify-center">
-                {activeLesson.video_url ? (
-                  <video ref={videoRef} key={activeLesson.id} controls autoPlay className="w-full h-full">
-                    <source src={activeLesson.video_url} />
+              <div className="bg-black aspect-video flex items-center justify-center relative">
+                {activeVideoUrl ? (
+                  <video ref={videoRef} key={`${activeLesson.id}-${language}`} controls autoPlay className="w-full h-full">
+                    <source src={activeVideoUrl} />
                     {fr ? 'Ton navigateur ne supporte pas la lecture vidéo.' : "Your browser doesn't support video playback."}
                   </video>
                 ) : (
-                  <p className="text-muted text-sm">{fr ? "Aucune vidéo n'a encore été ajoutée pour cette leçon." : 'No video has been added for this lesson yet.'}</p>
+                  <div className="text-center px-8">
+                    <p className="text-muted text-sm mb-2">
+                      {fr ? "Aucune vidéo disponible pour cette leçon" : 'No video available for this lesson'}
+                      {language === 'en' && activeLesson.video_url ? (
+                        <span className="block text-xs text-slate-600 mt-1">
+                          {fr ? '(Vidéo en français disponible)' : '(French video available)'}
+                        </span>
+                      ) : null}
+                    </p>
+                  </div>
+                )}
+
+                {/* Indicateur de langue de la vidéo */}
+                {activeVideoUrl && (
+                  <div className="absolute top-3 right-3">
+                    <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                      language === 'en' && activeLesson.video_url_en
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        : 'bg-white/10 text-slate-400 border border-white/10'
+                    }`}>
+                      {language === 'en' && activeLesson.video_url_en ? 'EN' : 'FR'}
+                    </span>
+                  </div>
                 )}
               </div>
 
@@ -152,6 +198,18 @@ const CoursePlayer = () => {
                   <div>
                     <span className="text-[11px] font-semibold text-primary-light uppercase tracking-wide">{t(course, 'title_fr', 'title_en')}</span>
                     <h1 className="font-display text-xl font-bold mt-1">{t(activeLesson, 'title_fr', 'title_en')}</h1>
+
+                    {/* Info vidéo disponible dans l'autre langue */}
+                    {language === 'en' && !activeLesson.video_url_en && activeLesson.video_url && (
+                      <p className="text-xs text-amber-400/70 mt-1">
+                        Video available in French only for this lesson.
+                      </p>
+                    )}
+                    {language === 'fr' && !activeLesson.video_url && activeLesson.video_url_en && (
+                      <p className="text-xs text-amber-400/70 mt-1">
+                        Vidéo disponible uniquement en anglais pour cette leçon.
+                      </p>
+                    )}
                   </div>
                   {!isLast ? (
                     <button onClick={goToNextLesson} className="bg-gradient-to-r from-primary to-primary-dark hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-shadow whitespace-nowrap shrink-0">

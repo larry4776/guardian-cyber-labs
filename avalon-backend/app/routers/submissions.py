@@ -10,6 +10,7 @@ from app.models.course import Course
 from app.models.user import User
 from app.schemas.submissions import SubmissionCreate, SubmissionGrade, SubmissionOut, SubmissionAdminOut
 from app.core.security import get_current_admin, get_current_user
+from app.core.email import email_livrable_corrige
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -105,6 +106,18 @@ def grade_submission(submission_id: int, payload: SubmissionGrade, db: Session =
     submission.graded_at = datetime.utcnow()
     db.commit()
     db.refresh(submission)
+
+    student = db.query(User).filter(User.id == submission.user_id).first()
+    course = db.query(Course).filter(Course.id == submission.course_id).first()
+    if student and course:
+        email_livrable_corrige(
+            student.first_name or '',
+            student.email,
+            course.title_fr,
+            payload.grade or 0,
+            payload.feedback_fr or '',
+            payload.status
+        )
 
     if payload.status == "validated":
         from app.routers.certificates import issue_certificate_if_needed

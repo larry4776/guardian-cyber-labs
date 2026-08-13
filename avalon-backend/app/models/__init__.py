@@ -7,3 +7,4 @@ from app.models.category import Category
 from app.models.exercises import Exercise, ExerciseAttempt
 from app.models.submissions import Submission
 from app.models.certificates import Certificate
+from app.models.settings import Setting

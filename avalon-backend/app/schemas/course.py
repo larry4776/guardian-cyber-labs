@@ -7,6 +7,7 @@ class LessonCreate(BaseModel):
     title_en: Optional[str] = None
     duration: str
     video_url: Optional[str] = None
+    video_url_en: Optional[str] = None
     order: int = 0
     skill_tags: Optional[str] = None
 
@@ -17,6 +18,7 @@ class LessonOut(BaseModel):
     title_en: Optional[str] = None
     duration: str
     video_url: Optional[str] = None
+    video_url_en: Optional[str] = None
     order: int
     skill_tags: Optional[str] = None
 
@@ -36,6 +38,7 @@ class CourseCreate(BaseModel):
     status: str = "draft"
     thumbnail_url: Optional[str] = None
     instructor_name: Optional[str] = None
+    instructor_avatar: Optional[str] = None
     rating: Optional[int] = 0
     reviews_count: Optional[int] = 0
     students_count: Optional[int] = 0
@@ -61,6 +64,7 @@ class CourseOut(BaseModel):
     status: str
     thumbnail_url: Optional[str] = None
     instructor_name: Optional[str] = None
+    instructor_avatar: Optional[str] = None
     rating: Optional[int] = 0
     reviews_count: Optional[int] = 0
     students_count: Optional[int] = 0

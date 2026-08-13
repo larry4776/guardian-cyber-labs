@@ -15,6 +15,7 @@ from app.schemas.user import (
     ResetPasswordRequest, UserUpdate, ConfirmPasswordChangeRequest, EnrollmentOut
 )
 from app.core.security import hash_password, verify_password, create_access_token, get_current_user
+from app.core.email import email_bienvenue
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,6 +38,8 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    email_bienvenue(user.first_name or '', user.email)
 
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "user": user}

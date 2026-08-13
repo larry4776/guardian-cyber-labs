@@ -22,6 +22,7 @@ class Course(Base):
     status = Column(String, default="draft")
     thumbnail_url = Column(String, nullable=True)
     instructor_name = Column(String, nullable=True)
+    instructor_avatar = Column(String, nullable=True)
 
     rating = Column(Integer, default=0)
     reviews_count = Column(Integer, default=0)
@@ -45,6 +46,7 @@ class Lesson(Base):
 
     duration = Column(String, default="00:00")
     video_url = Column(String, nullable=True)
+    video_url_en = Column(String, nullable=True)
     order = Column(Integer, default=0)
     skill_tags = Column(String, nullable=True)
 
