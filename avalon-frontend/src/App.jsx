@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SettingsProvider } from './context/SettingsContext';
@@ -31,7 +31,7 @@ const App = () => {
     <AuthProvider>
       <LanguageProvider>
         <SettingsProvider>
-          <BrowserRouter>
+          <HashRouter>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/catalog" element={<Catalog />} />
@@ -56,7 +56,7 @@ const App = () => {
               <Route path="/admin/messages" element={<AdminMessages />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
             </Routes>
-          </BrowserRouter>
+          </HashRouter>
         </SettingsProvider>
       </LanguageProvider>
     </AuthProvider>
