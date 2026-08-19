@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/guardian-cyber-labs/static/css/main.ec5ff799.css",
+    "main.js": "/guardian-cyber-labs/static/js/main.feb86710.js",
+    "index.html": "/guardian-cyber-labs/index.html",
+    "main.ec5ff799.css.map": "/guardian-cyber-labs/static/css/main.ec5ff799.css.map",
+    "main.feb86710.js.map": "/guardian-cyber-labs/static/js/main.feb86710.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ec5ff799.css",
+    "static/js/main.feb86710.js"
+  ]
+}
