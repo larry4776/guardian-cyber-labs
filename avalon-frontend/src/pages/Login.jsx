@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Shield } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { LanguageContext } from '../context/LanguageContext';
 import { API_URL } from '../config';
@@ -12,7 +12,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
-  const { language } = useContext(LanguageContext);
+  const { language, toggleLanguage } = useContext(LanguageContext);
   const navigate = useNavigate();
   const fr = language === 'fr';
 
@@ -44,55 +44,115 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-30 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,black_10%,transparent_100%)]"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/20 blur-[130px] rounded-full pointer-events-none"></div>
+    <div className="min-h-screen bg-base flex flex-col items-center justify-center px-4 py-12">
 
-      <div className="relative w-full max-w-sm">
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-light to-accent flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.4)]">
-            <Shield size={20} className="text-white" />
+      {/* Logo centré hors carte */}
+      <Link to="/" className="flex items-center gap-2.5 mb-8">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#3b6df0" strokeWidth="1.5" fill="rgba(59,109,240,0.08)" />
+          <polygon points="16,8 24,12 24,20 16,24 8,20 8,12" stroke="#3b6df0" strokeWidth="1" fill="none" />
+          <circle cx="16" cy="16" r="2.5" fill="#3b6df0" />
+        </svg>
+        <div className="flex flex-col leading-none">
+          <span className="font-display text-xs font-bold tracking-widest text-white">GUARDIAN</span>
+          <span className="font-display text-xs font-bold tracking-widest" style={{ color: '#3b6df0' }}>CYBER LABS</span>
+        </div>
+      </Link>
+
+      {/* Carte */}
+      <div className="w-full max-w-sm rounded-2xl p-8 relative"
+        style={{ background: '#0d1220', border: '1px solid rgba(255,255,255,0.08)' }}>
+
+        {/* Toggle langue */}
+        <button onClick={toggleLanguage}
+          className="absolute top-5 right-5 font-mono text-[10px] font-semibold text-muted hover:text-white border border-white/10 px-2 py-1 rounded transition-colors">
+          {language === 'fr' ? 'EN' : 'FR'}
+        </button>
+
+        {/* Label + Titre */}
+        <p className="font-mono text-xs text-primary tracking-widest mb-2">[ AUTH ]</p>
+        <h1 className="font-display text-2xl font-bold text-white mb-6">
+          {fr ? 'Connexion' : 'Log in'}
+        </h1>
+
+        {error && (
+          <div className="text-xs text-red-400 mb-4 px-3 py-2 rounded"
+            style={{ background: 'rgba(169,68,66,0.1)', border: '1px solid rgba(169,68,66,0.3)' }}>
+            {error}
           </div>
-          <span className="font-display text-xl font-bold tracking-tight text-white">
-            GUARDIAN <span className="bg-gradient-to-r from-primary-light to-accent bg-clip-text text-transparent">CYBER LABS</span>
-          </span>
-        </div>
+        )}
 
-        <div className="bg-surface/60 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
-          <h2 className="font-display text-2xl font-bold text-white mb-1 text-center">{fr ? 'Connexion' : 'Log in'}</h2>
-          <p className="text-muted text-sm mb-8 text-center">{fr ? 'Content de te revoir.' : 'Good to see you again.'}</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email */}
+          <div className="relative">
+            <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              type="email"
+              placeholder={fr ? 'votre@email.com' : 'your@email.com'}
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 rounded-lg text-sm text-white placeholder:text-muted outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={e => e.target.style.borderColor = 'rgba(59,109,240,0.5)'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+            />
+          </div>
 
-          {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">{error}</div>}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-400 mb-1.5 block">Email</label>
-              <input type="email" placeholder="toi@exemple.com" required onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-400 mb-1.5 block">{fr ? 'Mot de passe' : 'Password'}</label>
-              <div className="relative">
-                <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" required onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 pr-11 rounded-lg text-sm outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-slate-300">
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-            <div className="text-right">
-              <Link to="/forgot-password" className="text-xs text-primary-light hover:text-white">{fr ? 'Mot de passe oublié ?' : 'Forgot password?'}</Link>
-            </div>
-            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-primary to-primary-dark hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] disabled:opacity-50 text-white font-semibold py-3 rounded-lg text-sm transition-all mt-2">
-              {loading ? (fr ? 'Connexion...' : 'Logging in...') : (fr ? 'Se connecter' : 'Log in')}
+          {/* Mot de passe */}
+          <div className="relative">
+            <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder={fr ? 'Mot de passe' : 'Password'}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full pl-11 pr-11 py-3 rounded-lg text-sm text-white placeholder:text-muted outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={e => e.target.style.borderColor = 'rgba(59,109,240,0.5)'}
+              onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+            />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors">
+              {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
-          </form>
+          </div>
 
-          <p className="text-center text-muted text-sm mt-6">
-            {fr ? 'Pas encore de compte ?' : "Don't have an account?"} <Link to="/register" className="text-primary-light hover:text-white font-semibold">{fr ? "S'inscrire" : 'Sign up'}</Link>
-          </p>
-        </div>
+          {/* Mot de passe oublié */}
+          <div className="flex justify-end">
+            <Link to="/forgot-password"
+              className="font-mono text-[11px] transition-colors"
+              style={{ color: '#4a7fc2' }}
+              onMouseEnter={e => e.target.style.color = '#6090f8'}
+              onMouseLeave={e => e.target.style.color = '#4a7fc2'}>
+              {fr ? 'Mot de passe oublié ?' : 'Forgot password?'}
+            </Link>
+          </div>
+
+          {/* Bouton */}
+          <button type="submit" disabled={loading}
+            className="w-full py-3 rounded-lg text-sm font-semibold text-white transition-all"
+            style={{ backgroundColor: '#3b6ea5', border: '1px solid rgba(59,110,165,0.4)' }}
+            onMouseEnter={e => !loading && (e.target.style.backgroundColor = '#2a5a8a')}
+            onMouseLeave={e => !loading && (e.target.style.backgroundColor = '#3b6ea5')}>
+            {loading ? (fr ? 'Connexion...' : 'Logging in...') : (fr ? 'Se connecter' : 'Log in')}
+          </button>
+        </form>
+
+        {/* Lien inscription */}
+        <p className="text-center text-muted text-xs mt-6">
+          {fr ? 'Pas encore de compte ? ' : 'No account yet? '}
+          <Link to="/register" className="font-semibold transition-colors" style={{ color: '#4a7fc2' }}>
+            {fr ? "S'inscrire" : 'Sign up'}
+          </Link>
+        </p>
       </div>
+
+      {/* Retour accueil */}
+      <Link to="/" className="mt-6 font-mono text-[11px] text-muted hover:text-white transition-colors">
+        ← {fr ? "Retour à l'accueil" : 'Back to home'}
+      </Link>
     </div>
   );
 };

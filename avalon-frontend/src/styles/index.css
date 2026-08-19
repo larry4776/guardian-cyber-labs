@@ -1,13 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 body {
   font-family: 'Inter', sans-serif;
+  background-color: #0a0e17;
+  color: #ffffff;
 }
 
 .font-display {
   font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Label style [ COMME ÇA ] */
+.label-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #3b6df0;
+  text-transform: uppercase;
 }
 
 ::selection {
@@ -15,12 +33,33 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #05070D;
+  background: #0a0e17;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1D4ED8;
+  background: #2451c7;
   border-radius: 4px;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: rgba(13, 18, 32, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Glow effects */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 109, 240, 0.3);
+}
+.glow-red {
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.3);
+}
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+.glow-yellow {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
 }
