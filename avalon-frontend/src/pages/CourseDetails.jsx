@@ -10,13 +10,33 @@ const PALETTE = {
   red: { main: '#a94442', text: '#c0505a', bg: 'rgba(169,68,66,0.08)', border: 'rgba(169,68,66,0.35)' },
   blue: { main: '#3b6ea5', text: '#4a7fc2', bg: 'rgba(59,110,165,0.08)', border: 'rgba(59,110,165,0.35)' },
   gold: { main: '#b8974a', text: '#c9a94e', bg: 'rgba(184,151,74,0.08)', border: 'rgba(184,151,74,0.35)' },
-  green: { main: '#6a9e6a', text: '#7ab87a', bg: 'rgba(106,158,106,0.08)', border: 'rgba(106,158,106,0.35)' },
 };
 
 const BADGE_TYPES = {
   terminal: { label: 'Terminal simulé', color: '#4a7fc2', border: 'rgba(59,110,165,0.4)', bg: 'rgba(59,110,165,0.08)' },
   document: { label: 'Document', color: '#8A93A6', border: 'rgba(138,147,166,0.4)', bg: 'rgba(138,147,166,0.08)' },
   scenario: { label: 'Scénario décisionnel', color: '#c9a94e', border: 'rgba(184,151,74,0.4)', bg: 'rgba(184,151,74,0.08)' },
+};
+
+const COURSE_IMAGES = {
+  red_team: [
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&q=80',
+    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200&q=80',
+    'https://images.unsplash.com/photo-1563206767-5b18f218e8de?w=1200&q=80',
+    'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=1200&q=80',
+  ],
+  blue_team: [
+    'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&q=80',
+    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1200&q=80',
+    'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=1200&q=80',
+    'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200&q=80',
+  ],
+  grc: [
+    'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80',
+    'https://images.unsplash.com/photo-1553484771-371a605b060b?w=1200&q=80',
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80',
+  ],
 };
 
 const COURSES = [
@@ -37,7 +57,7 @@ const COURSES = [
       { num: '06', title: 'Introduction à Metasploit Framework', type: 'terminal' },
       { num: '07', title: 'Premier exploit guidé : EternalBlue (lab)', type: 'scenario' },
       { num: '08', title: "Post-exploitation basique : collecte d'info", type: 'terminal' },
-      { num: '09', title: 'Rédaction d\'un rapport de pentest', type: 'document' },
+      { num: '09', title: "Rédaction d'un rapport de pentest", type: 'document' },
       { num: '10', title: 'Scénario final : audit complet réseau lab', type: 'scenario' },
     ],
   },
@@ -50,15 +70,15 @@ const COURSES = [
     tags: ['Burp Suite', 'SQLi', 'XSS', 'CSRF', 'OWASP', 'Web Security'],
     prerequisites: 'Bases en informatique recommandées',
     lessons: [
-      { num: '01', title: 'Introduction à OWASP et environnement de lab', type: 'document' },
+      { num: '01', title: "Introduction à OWASP et environnement de lab", type: 'document' },
       { num: '02', title: 'Injection SQL : détection et exploitation', type: 'terminal' },
       { num: '03', title: 'Cross-Site Scripting (XSS) réfléchi et stocké', type: 'terminal' },
       { num: '04', title: 'CSRF : vol de session et bypass', type: 'scenario' },
       { num: '05', title: 'Broken Authentication & Session Management', type: 'document' },
       { num: '06', title: 'Prise en main de Burp Suite Pro', type: 'terminal' },
-      { num: '07', title: 'IDOR et contrôle d\'accès cassé', type: 'terminal' },
+      { num: '07', title: "IDOR et contrôle d'accès cassé", type: 'terminal' },
       { num: '08', title: 'Sécurité des APIs REST et GraphQL', type: 'document' },
-      { num: '09', title: 'Scénario : audit d\'une app web complète', type: 'scenario' },
+      { num: '09', title: "Scénario : audit d'une app web complète", type: 'scenario' },
       { num: '10', title: 'Rédaction du rapport de vulnérabilités web', type: 'document' },
     ],
   },
@@ -79,8 +99,8 @@ const COURSES = [
       { num: '06', title: 'Lateral movement et pivot réseau', type: 'terminal' },
       { num: '07', title: 'Golden Ticket et Silver Ticket', type: 'terminal' },
       { num: '08', title: 'DCSync et extraction de la base NTDS', type: 'terminal' },
-      { num: '09', title: 'Scénario : compromission complète d\'un domaine', type: 'scenario' },
-      { num: '10', title: 'Rapport d\'audit Active Directory', type: 'document' },
+      { num: '09', title: "Scénario : compromission complète d'un domaine", type: 'scenario' },
+      { num: '10', title: "Rapport d'audit Active Directory", type: 'document' },
     ],
   },
   {
@@ -92,13 +112,13 @@ const COURSES = [
     tags: ['Maltego', 'Shodan', 'OSINT', 'Reconnaissance', 'Google Dorks'],
     prerequisites: 'Bases en informatique',
     lessons: [
-      { num: '01', title: 'Introduction à l\'OSINT et cadre légal', type: 'document' },
+      { num: '01', title: "Introduction à l'OSINT et cadre légal", type: 'document' },
       { num: '02', title: 'Google Dorks et recherche avancée', type: 'terminal' },
       { num: '03', title: 'Prise en main de Maltego', type: 'terminal' },
       { num: '04', title: 'Shodan : moteur de recherche des objets connectés', type: 'terminal' },
       { num: '05', title: 'OSINT sur les réseaux sociaux', type: 'document' },
       { num: '06', title: 'Reconnaissance DNS et infrastructure', type: 'terminal' },
-      { num: '07', title: 'Scénario : profil complet d\'une cible fictive', type: 'scenario' },
+      { num: '07', title: "Scénario : profil complet d'une cible fictive", type: 'scenario' },
       { num: '08', title: 'Rapport de reconnaissance', type: 'document' },
     ],
   },
@@ -111,13 +131,13 @@ const COURSES = [
     tags: ['SIEM', 'Splunk', 'Log Analysis', 'SOC', 'Alertes', 'Incident'],
     prerequisites: 'Aucun prérequis obligatoire',
     lessons: [
-      { num: '01', title: 'Le métier d\'analyste SOC : rôles et responsabilités', type: 'document' },
+      { num: '01', title: "Le métier d'analyste SOC : rôles et responsabilités", type: 'document' },
       { num: '02', title: 'Introduction aux SIEM et à Splunk', type: 'terminal' },
       { num: '03', title: 'Lecture et interprétation des logs système', type: 'terminal' },
       { num: '04', title: 'Gestion des alertes : tri et priorisation', type: 'document' },
-      { num: '05', title: 'Détection d\'intrusion basique', type: 'terminal' },
+      { num: '05', title: "Détection d'intrusion basique", type: 'terminal' },
       { num: '06', title: 'Scénario : première alerte réelle', type: 'scenario' },
-      { num: '07', title: 'Escalade et communication d\'incident', type: 'document' },
+      { num: '07', title: "Escalade et communication d'incident", type: 'document' },
       { num: '08', title: 'Rapport d\'incident niveau 1', type: 'document' },
     ],
   },
@@ -130,13 +150,13 @@ const COURSES = [
     tags: ['Wireshark', 'Sandbox', 'RE', 'Malware', 'IDA Pro', 'Behavioral Analysis'],
     prerequisites: 'Bases en réseau et système recommandées',
     lessons: [
-      { num: '01', title: 'Types de malwares et vecteurs d\'infection', type: 'document' },
-      { num: '02', title: 'Mise en place d\'un lab d\'analyse sécurisé', type: 'terminal' },
+      { num: '01', title: "Types de malwares et vecteurs d'infection", type: 'document' },
+      { num: '02', title: "Mise en place d'un lab d'analyse sécurisé", type: 'terminal' },
       { num: '03', title: 'Analyse statique : strings, imports, entropie', type: 'terminal' },
       { num: '04', title: 'Analyse dynamique avec sandbox', type: 'terminal' },
       { num: '05', title: 'Capture réseau avec Wireshark', type: 'terminal' },
       { num: '06', title: 'Introduction au reverse engineering', type: 'document' },
-      { num: '07', title: 'Scénario : analyse d\'un ransomware réel (lab)', type: 'scenario' },
+      { num: '07', title: "Scénario : analyse d'un ransomware réel (lab)", type: 'scenario' },
       { num: '08', title: 'Rapport d\'analyse malware', type: 'document' },
     ],
   },
@@ -172,8 +192,8 @@ const COURSES = [
       { num: '02', title: 'Syslog : format et analyse', type: 'terminal' },
       { num: '03', title: 'Événements Windows : IDs critiques', type: 'document' },
       { num: '04', title: 'Introduction à la stack ELK', type: 'terminal' },
-      { num: '05', title: 'Corrélation de logs et détection d\'anomalies', type: 'terminal' },
-      { num: '06', title: 'Scénario : détecter une intrusion dans les logs', type: 'scenario' },
+      { num: '05', title: "Corrélation de logs et détection d'anomalies", type: 'terminal' },
+      { num: '06', title: "Scénario : détecter une intrusion dans les logs", type: 'scenario' },
     ],
   },
   {
@@ -186,13 +206,13 @@ const COURSES = [
     prerequisites: 'Aucun prérequis obligatoire',
     lessons: [
       { num: '01', title: 'Introduction à la famille ISO 27000', type: 'document' },
-      { num: '02', title: 'Structure et exigences de l\'ISO 27001', type: 'document' },
+      { num: '02', title: "Structure et exigences de l'ISO 27001", type: 'document' },
       { num: '03', title: 'Périmètre et contexte du SMSI', type: 'document' },
       { num: '04', title: 'Analyse des risques : méthode et outils', type: 'terminal' },
-      { num: '05', title: 'Déclaration d\'applicabilité (SoA)', type: 'document' },
+      { num: '05', title: "Déclaration d'applicabilité (SoA)", type: 'document' },
       { num: '06', title: 'Politiques et procédures de sécurité', type: 'document' },
       { num: '07', title: 'Scénario : préparer un audit de certification', type: 'scenario' },
-      { num: '08', title: 'Rapport d\'évaluation de conformité', type: 'document' },
+      { num: '08', title: "Rapport d'évaluation de conformité", type: 'document' },
     ],
   },
   {
@@ -207,7 +227,7 @@ const COURSES = [
       { num: '01', title: 'Histoire et principes fondamentaux du RGPD', type: 'document' },
       { num: '02', title: 'Rôle et missions du DPO', type: 'document' },
       { num: '03', title: 'Cartographie des traitements de données', type: 'terminal' },
-      { num: '04', title: 'Analyse d\'impact relative à la protection des données (PIA)', type: 'document' },
+      { num: '04', title: "Analyse d'impact relative à la protection des données (PIA)", type: 'document' },
       { num: '05', title: 'Droits des personnes : mise en œuvre pratique', type: 'scenario' },
       { num: '06', title: 'Transferts internationaux de données', type: 'document' },
       { num: '07', title: 'Gestion des violations de données', type: 'scenario' },
@@ -229,8 +249,8 @@ const COURSES = [
       { num: '04', title: 'Atelier 3 : scénarios stratégiques', type: 'scenario' },
       { num: '05', title: 'Atelier 4 : scénarios opérationnels', type: 'scenario' },
       { num: '06', title: 'Atelier 5 : traitement du risque', type: 'document' },
-      { num: '07', title: 'Scénario complet : EBIOS RM d\'une infrastructure critique', type: 'scenario' },
-      { num: '08', title: 'Rapport d\'analyse des risques', type: 'document' },
+      { num: '07', title: "Scénario complet : EBIOS RM d'une infrastructure critique", type: 'scenario' },
+      { num: '08', title: "Rapport d'analyse des risques", type: 'document' },
     ],
   },
   {
@@ -242,13 +262,13 @@ const COURSES = [
     tags: ['PCA', 'Incident', 'Communication', 'Crise', 'PRI', 'Coordination'],
     prerequisites: 'Bases en GRC recommandées',
     lessons: [
-      { num: '01', title: 'Anatomie d\'une crise cyber', type: 'document' },
-      { num: '02', title: 'Plan de Continuité d\'Activité (PCA)', type: 'document' },
+      { num: '01', title: "Anatomie d'une crise cyber", type: 'document' },
+      { num: '02', title: "Plan de Continuité d'Activité (PCA)", type: 'document' },
       { num: '03', title: 'Cellule de crise : rôles et organisation', type: 'document' },
       { num: '04', title: 'Communication de crise interne et externe', type: 'scenario' },
       { num: '05', title: 'Coordination avec les autorités (ANSSI, CNIL)', type: 'document' },
       { num: '06', title: 'Scénario : simulation de crise ransomware', type: 'scenario' },
-      { num: '07', title: 'Retour d\'expérience et amélioration continue', type: 'document' },
+      { num: '07', title: "Retour d'expérience et amélioration continue", type: 'document' },
     ],
   },
 ];
@@ -282,45 +302,53 @@ const CourseDetails = () => {
   }
 
   const levelP = LEVEL_PALETTE[course.level];
+  const courseImage = COURSE_IMAGES[course.category][(course.id - 1) % 4];
 
   const handleEnroll = () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    } else {
-      navigate('/dashboard');
-    }
+    if (!isAuthenticated) navigate('/login');
+    else navigate('/dashboard');
   };
 
   return (
     <div className="min-h-screen bg-base text-white font-sans">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      {/* IMAGE EN GRAND EN HAUT — titre superposé */}
+      <div className="relative w-full h-72 md:h-96 overflow-hidden">
+        <img
+          src={courseImage}
+          alt={course.title}
+          className="w-full h-full object-cover"
+          style={{ filter: 'brightness(0.45) saturate(0.7)' }}
+        />
+        {/* Dégradé sombre vers le bas */}
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, #0a0e17 0%, rgba(10,14,23,0.5) 50%, rgba(10,14,23,0.15) 100%)' }} />
 
-        {/* Fil d'ariane */}
-        <div className="flex items-center gap-2 text-xs text-muted mb-8 font-mono">
-          <Link to="/catalog" className="hover:text-white transition-colors flex items-center gap-1">
-            <ArrowLeft size={12} /> {fr ? 'Catalogue' : 'Catalog'}
-          </Link>
-          <span>/</span>
-          <span style={{ color: course.palette.text }}>{course.label}</span>
+        {/* Fil d'ariane + Badge + Titre superposés */}
+        <div className="absolute bottom-0 left-0 right-0 px-6 md:px-12 pb-8">
+          <div className="flex items-center gap-2 text-xs text-slate-400 font-mono mb-3">
+            <Link to="/catalog" className="hover:text-white transition-colors flex items-center gap-1">
+              <ArrowLeft size={12} /> {fr ? 'Catalogue' : 'Catalog'}
+            </Link>
+            <span>/</span>
+            <span style={{ color: course.palette.text }}>{course.label}</span>
+          </div>
+          <span className="font-mono text-xs px-2.5 py-1 rounded mb-3 inline-block"
+            style={{ color: course.palette.text, border: `1px solid ${course.palette.border}`, background: 'rgba(0,0,0,0.5)' }}>
+            {course.label}
+          </span>
+          <h1 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight mt-2">
+            {course.title}
+          </h1>
         </div>
+      </div>
 
+      {/* Contenu principal */}
+      <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid lg:grid-cols-[1fr_320px] gap-10 items-start">
 
-          {/* Contenu principal */}
           <div className="space-y-10">
-
-            {/* Titre */}
-            <div>
-              <span className="font-mono text-xs px-2.5 py-1 rounded mb-3 inline-block"
-                style={{ color: course.palette.text, border: `1px solid ${course.palette.border}`, background: course.palette.bg }}>
-                {course.label}
-              </span>
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-white leading-tight">
-                {course.title}
-              </h1>
-            </div>
 
             {/* Description */}
             <div>
@@ -373,8 +401,6 @@ const CourseDetails = () => {
           <div className="lg:sticky lg:top-24">
             <div className="rounded-2xl p-6 space-y-5"
               style={{ background: '#0d1220', border: '1px solid rgba(255,255,255,0.08)' }}>
-
-              {/* Prix */}
               <div>
                 <p className="font-display text-3xl font-bold text-white">{course.price} USD</p>
                 <p className="font-mono text-[10px] text-muted mt-1">
@@ -382,15 +408,13 @@ const CourseDetails = () => {
                 </p>
               </div>
 
-              {/* Bouton */}
               <button onClick={handleEnroll}
                 className="w-full py-3.5 rounded-lg text-sm font-semibold text-white transition-all"
                 style={{ backgroundColor: '#3b6ea5', border: '1px solid rgba(59,110,165,0.4)' }}>
                 {fr ? "S'inscrire à ce parcours" : 'Enroll in this course'}
               </button>
 
-              {/* Infos */}
-              <div className="space-y-3 pt-2 border-t border-white/8">
+              <div className="space-y-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 {[
                   { label: fr ? 'Durée estimée' : 'Estimated duration', value: course.duration, color: null },
                   { label: fr ? 'Niveau' : 'Level', value: fr ? course.level_fr : course.level.charAt(0).toUpperCase() + course.level.slice(1), color: levelP.color },
