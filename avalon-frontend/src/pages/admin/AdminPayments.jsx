@@ -1,81 +1,113 @@
-import React, { useState, useEffect, useContext } from 'react';
-import AdminLayout from './AdminLayout';
-import { AuthContext } from '../../context/AuthContext';
-import { API_URL } from '../../config';
+import React, { useState } from 'react';
+import { Search, Download, ChevronDown } from 'lucide-react';
+import AdminSidebar from './AdminSidebar';
+
+const USERS = [
+  { initiale: 'M', couleurAvatar: '#c0505a', nom: 'Moussa Diallo', email: 'moussa.d@example.com', famille: 'RED TEAM', familleColor: '#c0505a', familleBg: 'rgba(192,80,90,0.15)', parcours: 'Pentest Web', progression: 87, paiement: 'Payé', langue: 'FR', statut: 'Actif' },
+  { initiale: 'A', couleurAvatar: '#4a7fc2', nom: 'Ama Owusu', email: 'ama.o@example.com', famille: 'BLUE TEAM', familleColor: '#4a7fc2', familleBg: 'rgba(74,127,194,0.15)', parcours: 'SOC Analyst L1', progression: 64, paiement: 'Payé', langue: 'EN', statut: 'Actif' },
+  { initiale: 'I', couleurAvatar: '#c9a94e', nom: 'Ibrahim Touré', email: 'ibrahim.t@example.com', famille: 'GRC', familleColor: '#c9a94e', familleBg: 'rgba(201,169,78,0.15)', parcours: 'ISO 27001 Lead', progression: 42, paiement: 'Payé', langue: 'FR', statut: 'Actif' },
+  { initiale: 'K', couleurAvatar: '#c0505a', nom: 'Kofi Mensah', email: 'kofi.m@example.com', famille: 'RED TEAM', familleColor: '#c0505a', familleBg: 'rgba(192,80,90,0.15)', parcours: 'Ethical Hacking', progression: 23, paiement: 'Payé', langue: 'EN', statut: 'Actif' },
+  { initiale: 'F', couleurAvatar: '#4a7fc2', nom: 'Fatou Sow', email: 'fatou.s@example.com', famille: 'BLUE TEAM', familleColor: '#4a7fc2', familleBg: 'rgba(74,127,194,0.15)', parcours: 'Threat Hunting', progression: 71, paiement: 'Payé', langue: 'FR', statut: 'Actif' },
+  { initiale: 'J', couleurAvatar: '#8A93A6', nom: 'Jean-Luc Martin', email: 'jl.martin@example.com', famille: 'GRC', familleColor: '#c9a94e', familleBg: 'rgba(201,169,78,0.15)', parcours: 'RGPD & Conformité', progression: 15, paiement: 'Échoué', langue: 'FR', statut: 'Inactif' },
+  { initiale: 'A', couleurAvatar: '#c0505a', nom: 'Aissatou Bah', email: 'aissatou.b@example.com', famille: 'RED TEAM', familleColor: '#c0505a', familleBg: 'rgba(192,80,90,0.15)', parcours: 'Pentest Web', progression: 94, paiement: 'Payé', langue: 'FR', statut: 'Actif' },
+  { initiale: 'S', couleurAvatar: '#c0505a', nom: 'Seun Adeyemi', email: 'seun.a@example.com', famille: 'RED TEAM', familleColor: '#c0505a', familleBg: 'rgba(192,80,90,0.15)', parcours: 'AD Attacks', progression: 38, paiement: 'Payé', langue: 'EN', statut: 'Actif' },
+];
+
+const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' };
 
 const AdminPayments = () => {
-  const { token } = useContext(AuthContext);
-  const authHeaders = { Authorization: `Bearer ${token}` };
-  const [methods, setMethods] = useState([]);
-  const [uploading, setUploading] = useState(null);
-  const [saveMsg, setSaveMsg] = useState('');
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetch(`${API_URL}/payment-methods/all`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : []).then(setMethods);
-  }, []);
-
-  const updateField = (key, field, value) => {
-    setMethods(methods.map(m => m.key === key ? { ...m, [field]: value } : m));
-  };
-
-  const handleLogoUpload = async (key, file) => {
-    if (!file) return;
-    setUploading(key);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API_URL}/uploads/image`, { method: 'POST', headers: authHeaders, body: formData });
-      const data = await res.json();
-      updateField(key, 'logo_url', `${API_URL}${data.url}`);
-    } catch { alert("Échec de l'import du logo."); }
-    finally { setUploading(null); }
-  };
-
-  const saveMethod = async (m) => {
-    await fetch(`${API_URL}/payment-methods/${m.key}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ display_name: m.display_name, logo_url: m.logo_url, receiving_info: m.receiving_info, enabled: m.enabled }),
-    });
-    setSaveMsg(`✓ ${m.display_name} enregistré.`);
-    setTimeout(() => setSaveMsg(''), 2500);
-  };
+  const filtered = USERS.filter(u =>
+    u.nom.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <AdminLayout title="Moyens de paiement">
-      <div className="space-y-4">
-        {saveMsg && <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm rounded-lg px-4 py-3">{saveMsg}</div>}
-        {methods.map((m) => (
-          <div key={m.key} className="bg-surface border border-white/10 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-bold text-white uppercase">{m.key}</span>
-              <label className="flex items-center gap-2 text-xs text-slate-400">
-                <input type="checkbox" checked={m.enabled} onChange={(e) => updateField(m.key, 'enabled', e.target.checked)} className="accent-primary" />
-                Actif
-              </label>
-            </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input type="text" placeholder="Nom affiché" value={m.display_name}
-                onChange={(e) => updateField(m.key, 'display_name', e.target.value)}
-                className="bg-white/[0.03] border border-white/10 px-3 py-2 text-sm rounded-lg text-white outline-none focus:border-primary/50" />
-              <input type="text" placeholder="Infos de réception" value={m.receiving_info || ''}
-                onChange={(e) => updateField(m.key, 'receiving_info', e.target.value)}
-                className="bg-white/[0.03] border border-white/10 px-3 py-2 text-sm rounded-lg text-white outline-none focus:border-primary/50" />
-            </div>
-            <div className="flex items-center gap-3">
-              {m.logo_url && <img src={m.logo_url} alt="" className="h-8 object-contain bg-white/5 rounded px-2 py-1" />}
-              <label className="bg-white/[0.03] border border-white/10 hover:border-primary/40 text-slate-300 hover:text-primary-light px-3 py-2 rounded-lg text-xs font-semibold uppercase cursor-pointer transition-colors">
-                {uploading === m.key ? 'Import...' : 'Choisir un logo'}
-                <input type="file" accept="image/*" onChange={(e) => handleLogoUpload(m.key, e.target.files[0])} className="hidden" disabled={uploading === m.key} />
-              </label>
-              <button onClick={() => saveMethod(m)} className="ml-auto bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold px-4 py-2 rounded-lg">
-                Enregistrer
-              </button>
-            </div>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #080d1a 0%, #0d0f2b 100%)', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      <AdminSidebar />
+      <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <div>
+            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: 0 }}>Utilisateurs & Inscrits</h1>
+            <p style={{ fontSize: '13px', color: '#8A93A6', marginTop: '4px' }}>8 inscrits · <span style={{ color: '#6a9e6a' }}>7 actifs</span></p>
           </div>
-        ))}
+          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#3b6ea5', border: '1px solid rgba(59,110,165,0.4)', color: '#fff', borderRadius: '8px', padding: '10px 18px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+            <Download size={14} /> Exporter CSV
+          </button>
+        </div>
+
+        {/* Filtres */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#8A93A6' }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher un utilisateur…"
+              style={{ width: '100%', paddingLeft: '38px', paddingRight: '12px', paddingTop: '9px', paddingBottom: '9px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          {['Toutes les familles', 'Tous les statuts', 'Toutes les langues'].map(label => (
+            <div key={label} style={{ position: 'relative' }}>
+              <select style={{ appearance: 'none', padding: '9px 32px 9px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', cursor: 'pointer', outline: 'none' }}>
+                <option>{label}</option>
+              </select>
+              <ChevronDown size={14} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', color: '#8A93A6', pointerEvents: 'none' }} />
+            </div>
+          ))}
+        </div>
+
+        {/* Tableau */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                {['UTILISATEUR','FAMILLE','PARCOURS','PROGRESSION','PAIEMENT','LANGUE','STATUT',''].map((h,i) => (
+                  <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((u, i) => (
+                <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <td style={{ padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: u.couleurAvatar, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700', color: '#fff' }}>{u.initiale}</div>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{u.nom}</div>
+                        <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>{u.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', color: u.familleColor, background: u.familleBg }}>{u.famille}</span>
+                  </td>
+                  <td style={{ padding: '14px 16px', fontSize: '13px', color: '#fff' }}>{u.parcours}</td>
+                  <td style={{ padding: '14px 16px', minWidth: '120px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '4px', height: '6px' }}>
+                        <div style={{ width: `${u.progression}%`, height: '100%', background: u.familleColor, borderRadius: '4px' }} />
+                      </div>
+                      <span style={{ fontSize: '12px', color: '#fff', fontWeight: '600', minWidth: '30px' }}>{u.progression}%</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', color: u.paiement === 'Payé' ? '#6a9e6a' : '#c0505a', background: u.paiement === 'Payé' ? 'rgba(106,158,106,0.15)' : 'rgba(192,80,90,0.15)' }}>{u.paiement}</span>
+                  </td>
+                  <td style={{ padding: '14px 16px', fontSize: '13px', color: '#8A93A6' }}>{u.langue}</td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', color: u.statut === 'Actif' ? '#6a9e6a' : '#8A93A6', background: u.statut === 'Actif' ? 'rgba(106,158,106,0.15)' : 'rgba(138,147,166,0.15)' }}>{u.statut}</span>
+                  </td>
+                  <td style={{ padding: '14px 16px' }}>
+                    <button style={{ fontSize: '12px', fontWeight: '600', padding: '6px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>Voir</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
+
 export default AdminPayments;

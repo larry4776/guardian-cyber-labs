@@ -25,6 +25,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminPayments from './pages/admin/AdminPayments';
 import AdminMessages from './pages/admin/AdminMessages';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminCorrectionDetail from './pages/admin/AdminCorrectionDetail';
 
 const App = () => {
   return (
@@ -55,6 +57,8 @@ const App = () => {
               <Route path="/admin/payments" element={<AdminPayments />} />
               <Route path="/admin/messages" element={<AdminMessages />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/layout" element={<AdminLayout />} />
+              <Route path="/admin/correction/:id" element={<AdminCorrectionDetail />} />
             </Routes>
           </HashRouter>
         </SettingsProvider>
@@ -62,4 +66,5 @@ const App = () => {
     </AuthProvider>
   );
 };
+
 export default App;

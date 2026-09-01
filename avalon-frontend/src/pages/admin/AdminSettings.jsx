@@ -1,227 +1,79 @@
-import React, { useState, useEffect, useContext } from 'react';
-import AdminLayout from './AdminLayout';
-import { AuthContext } from '../../context/AuthContext';
-import { API_URL } from '../../config';
+import React from 'react';
+import { Download, ExternalLink } from 'lucide-react';
+import AdminSidebar from './AdminSidebar';
 
-const DEFAULT_TESTIMONIALS = [
-  { id: 1, name: 'Koffi A.', role: 'Analyste SOC', text: "Les parcours sont vraiment pratiques, j'ai pu appliquer directement ce que j'ai appris en entreprise. La certification m'a ouvert des portes.", stars: 5 },
-  { id: 2, name: 'Mariama D.', role: 'Étudiante en cybersécurité', text: 'Le module Blue Team est excellent. Les exercices pratiques sont bien pensés et la correction manuelle des livrables est un vrai plus.', stars: 5 },
-  { id: 3, name: 'Ibrahim S.', role: 'Consultant GRC', text: "J'ai validé ma certification GRC en quelques semaines. Le contenu est dense et de qualité, adapté aux réalités du marché africain.", stars: 5 },
+const CERTIFICATS = [
+  { id: 'GCL-2026-0341', titulaire: 'Aissatou Bah', parcours: 'Pentest Web', famille: 'RED TEAM', familleColor: '#c0505a', familleBg: 'rgba(192,80,90,0.15)', score: 91, date: '17 août 2026' },
+  { id: 'GCL-2026-0340', titulaire: 'Fatou Sow', parcours: 'SOC Analyst L1', famille: 'BLUE TEAM', familleColor: '#4a7fc2', familleBg: 'rgba(74,127,194,0.15)', score: 78, date: '15 août 2026' },
+  { id: 'GCL-2026-0339', titulaire: 'Ibrahim Touré', parcours: 'ISO 27001 Lead', famille: 'GRC', familleColor: '#c9a94e', familleBg: 'rgba(201,169,78,0.15)', score: 84, date: '14 août 2026' },
+  { id: 'GCL-2026-0338', titulaire: 'Ama Owusu', parcours: 'Threat Hunting', famille: 'BLUE TEAM', familleColor: '#4a7fc2', familleBg: 'rgba(74,127,194,0.15)', score: 88, date: '12 août 2026' },
+  { id: 'GCL-2026-0337', titulaire: 'Kofi Mensah', parcours: 'Ethical Hacking', famille: 'RED TEAM', familleColor: '#c0505a', familleBg: 'rgba(192,80,90,0.15)', score: 76, date: '10 août 2026' },
+  { id: 'GCL-2026-0336', titulaire: 'Moussa Diallo', parcours: 'RGPD & Conformité', famille: 'GRC', familleColor: '#c9a94e', familleBg: 'rgba(201,169,78,0.15)', score: 92, date: '8 août 2026' },
 ];
 
-const AdminSettings = () => {
-  const { token } = useContext(AuthContext);
-  const authHeaders = { Authorization: `Bearer ${token}` };
+const scoreColor = (s) => s >= 90 ? '#6a9e6a' : '#c9a94e';
+const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' };
 
-  const [settings, setSettings] = useState({
-    currency: 'FCFA',
-    stats_learners: '500+',
-    stats_certified: '120+',
-    stats_courses: '9',
-    stats_rating: '4.8/5',
-  });
+const AdminSettings = () => (
+  <div style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #080d1a 0%, #0d0f2b 100%)', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+    <AdminSidebar />
+    <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
 
-  const [testimonials, setTestimonials] = useState([]);
-  const [newTestimonial, setNewTestimonial] = useState({ name: '', role: '', text: '', stars: 5 });
-  const [msg, setMsg] = useState('');
-  const [msgTestimonial, setMsgTestimonial] = useState('');
-
-  useEffect(() => {
-    fetch(`${API_URL}/settings/`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : {})
-      .then(data => {
-        if (Object.keys(data).length > 0) setSettings(prev => ({ ...prev, ...data }));
-        if (data.testimonials) {
-          try {
-            const parsed = JSON.parse(data.testimonials);
-            setTestimonials(parsed);
-          } catch {
-            setTestimonials(DEFAULT_TESTIMONIALS);
-          }
-        } else {
-          // Aucun témoignage en base — on charge les défauts et on les sauvegarde
-          setTestimonials(DEFAULT_TESTIMONIALS);
-          fetch(`${API_URL}/settings/testimonials`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...authHeaders },
-            body: JSON.stringify({ value: JSON.stringify(DEFAULT_TESTIMONIALS) }),
-          });
-        }
-      })
-      .catch(() => setTestimonials(DEFAULT_TESTIMONIALS));
-  }, []);
-
-  const saveSetting = async (key, value) => {
-    await fetch(`${API_URL}/settings/${key}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ value }),
-    });
-  };
-
-  const saveAllSettings = async () => {
-    setMsg('');
-    try {
-      await Promise.all([
-        saveSetting('currency', settings.currency),
-        saveSetting('stats_learners', settings.stats_learners),
-        saveSetting('stats_certified', settings.stats_certified),
-        saveSetting('stats_courses', settings.stats_courses),
-        saveSetting('stats_rating', settings.stats_rating),
-      ]);
-      setMsg('✓ Réglages enregistrés.');
-      setTimeout(() => setMsg(''), 3000);
-    } catch {
-      setMsg('Erreur lors de la sauvegarde.');
-    }
-  };
-
-  const addTestimonial = async () => {
-    if (!newTestimonial.name || !newTestimonial.text) return;
-    const updated = [...testimonials, { ...newTestimonial, id: Date.now() }];
-    setTestimonials(updated);
-    await saveSetting('testimonials', JSON.stringify(updated));
-    setNewTestimonial({ name: '', role: '', text: '', stars: 5 });
-    setMsgTestimonial('✓ Témoignage ajouté.');
-    setTimeout(() => setMsgTestimonial(''), 3000);
-  };
-
-  const deleteTestimonial = async (id) => {
-    const updated = testimonials.filter(t => t.id !== id);
-    setTestimonials(updated);
-    await saveSetting('testimonials', JSON.stringify(updated));
-    setMsgTestimonial('✓ Témoignage supprimé.');
-    setTimeout(() => setMsgTestimonial(''), 3000);
-  };
-
-  return (
-    <AdminLayout title="Réglages de la plateforme">
-      <div className="space-y-8">
-
-        {/* Devise & Chiffres clés */}
-        <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-5">
-          <h3 className="text-sm font-bold text-white border-b border-white/10 pb-4">Devise & Chiffres clés</h3>
-
-          {msg && (
-            <div className={`text-sm rounded-lg px-4 py-3 ${msg.startsWith('✓') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-              {msg}
-            </div>
-          )}
-
-          <div>
-            <label className="text-xs font-semibold text-slate-400 mb-2 block">Devise affichée sur le site</label>
-            <select value={settings.currency} onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none w-full md:w-64">
-              <option value="FCFA">FCFA (Franc CFA)</option>
-              <option value="USD">USD (Dollar américain)</option>
-              <option value="EUR">EUR (Euro)</option>
-            </select>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-400 mb-2 block">Nombre d'apprenants inscrits</label>
-              <input type="text" value={settings.stats_learners}
-                onChange={(e) => setSettings({ ...settings, stats_learners: e.target.value })}
-                placeholder="ex: 500+"
-                className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-400 mb-2 block">Nombre de certifiés</label>
-              <input type="text" value={settings.stats_certified}
-                onChange={(e) => setSettings({ ...settings, stats_certified: e.target.value })}
-                placeholder="ex: 120+"
-                className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-400 mb-2 block">Nombre de parcours disponibles</label>
-              <input type="text" value={settings.stats_courses}
-                onChange={(e) => setSettings({ ...settings, stats_courses: e.target.value })}
-                placeholder="ex: 9"
-                className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50" />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-400 mb-2 block">Note moyenne</label>
-              <input type="text" value={settings.stats_rating}
-                onChange={(e) => setSettings({ ...settings, stats_rating: e.target.value })}
-                placeholder="ex: 4.8/5"
-                className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50" />
-            </div>
-          </div>
-
-          <button onClick={saveAllSettings}
-            className="bg-gradient-to-r from-primary to-primary-dark text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-shadow hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]">
-            Enregistrer les réglages
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', margin: 0 }}>Certificats émis</h1>
+          <p style={{ fontSize: '13px', color: '#8A93A6', marginTop: '4px' }}>6 certificats émis ce mois</p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: '8px', padding: '10px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+            <Download size={14} /> Exporter tout
+          </button>
+          <button style={{ background: '#3b6ea5', border: '1px solid rgba(59,110,165,0.4)', color: '#fff', borderRadius: '8px', padding: '10px 18px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+            + Émettre manuel
           </button>
         </div>
-
-        {/* Témoignages */}
-        <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-5">
-          <h3 className="text-sm font-bold text-white border-b border-white/10 pb-4">
-            Témoignages ({testimonials.length})
-          </h3>
-
-          {msgTestimonial && (
-            <div className={`text-sm rounded-lg px-4 py-3 ${msgTestimonial.startsWith('✓') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-              {msgTestimonial}
-            </div>
-          )}
-
-          {/* Liste des témoignages existants */}
-          {testimonials.length > 0 && (
-            <div className="space-y-3">
-              {testimonials.map(t => (
-                <div key={t.id} className="bg-white/[0.02] border border-white/10 rounded-lg p-4 flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-white font-semibold text-sm">{t.name}</p>
-                      <span className="text-muted text-xs">— {t.role}</span>
-                      <span className="text-amber-400 text-xs">{'★'.repeat(t.stars)}</span>
-                    </div>
-                    <p className="text-slate-400 text-xs leading-relaxed">"{t.text}"</p>
-                  </div>
-                  <button onClick={() => deleteTestimonial(t.id)}
-                    className="text-red-400 hover:text-red-300 text-xs font-semibold shrink-0 uppercase">
-                    Supprimer
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Ajouter un témoignage */}
-          <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4 space-y-3">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Ajouter un témoignage</p>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input type="text" placeholder="Nom (ex: Koffi A.)" value={newTestimonial.name}
-                onChange={(e) => setNewTestimonial({ ...newTestimonial, name: e.target.value })}
-                className="bg-white/[0.03] border border-white/10 text-white px-3 py-2 rounded-lg text-sm outline-none focus:border-primary/50" />
-              <input type="text" placeholder="Rôle (ex: Analyste SOC)" value={newTestimonial.role}
-                onChange={(e) => setNewTestimonial({ ...newTestimonial, role: e.target.value })}
-                className="bg-white/[0.03] border border-white/10 text-white px-3 py-2 rounded-lg text-sm outline-none focus:border-primary/50" />
-            </div>
-            <textarea rows="3" placeholder="Témoignage..." value={newTestimonial.text}
-              onChange={(e) => setNewTestimonial({ ...newTestimonial, text: e.target.value })}
-              className="w-full bg-white/[0.03] border border-white/10 text-white px-3 py-2 rounded-lg text-sm outline-none focus:border-primary/50 resize-none" />
-            <div className="flex items-center gap-3">
-              <label className="text-xs text-slate-400">Note :</label>
-              <select value={newTestimonial.stars}
-                onChange={(e) => setNewTestimonial({ ...newTestimonial, stars: parseInt(e.target.value) })}
-                className="bg-white/[0.03] border border-white/10 text-white px-3 py-2 rounded-lg text-sm outline-none">
-                <option value={5}>★★★★★ (5)</option>
-                <option value={4}>★★★★☆ (4)</option>
-                <option value={3}>★★★☆☆ (3)</option>
-              </select>
-              <button onClick={addTestimonial} disabled={!newTestimonial.name || !newTestimonial.text}
-                className="ml-auto bg-gradient-to-r from-primary to-primary-dark disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-lg">
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-
       </div>
-    </AdminLayout>
-  );
-};
+
+      <div style={{ ...card, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {['ID CERTIFICAT','TITULAIRE','PARCOURS','FAMILLE','SCORE','ÉMIS LE','VÉRIFICATION',''].map((h,i) => (
+                <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {CERTIFICATS.map((c, i) => (
+              <tr key={i} style={{ borderBottom: i < CERTIFICATS.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '600', color: '#4a7fc2' }}>{c.id}</td>
+                <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '600', color: '#fff' }}>{c.titulaire}</td>
+                <td style={{ padding: '14px 16px', fontSize: '13px', color: '#fff' }}>{c.parcours}</td>
+                <td style={{ padding: '14px 16px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', color: c.familleColor, background: c.familleBg }}>{c.famille}</span>
+                </td>
+                <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '700', color: scoreColor(c.score) }}>{c.score}/100</td>
+                <td style={{ padding: '14px 16px', fontSize: '13px', color: '#8A93A6' }}>{c.date}</td>
+                <td style={{ padding: '14px 16px' }}>
+                  <a href={`#verify/${c.id}`} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#4a7fc2', textDecoration: 'none' }}>
+                    verify/{c.id} <ExternalLink size={11} />
+                  </a>
+                </td>
+                <td style={{ padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '6px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <Download size={13} color="#8A93A6" />
+                    </button>
+                    <button style={{ fontSize: '12px', fontWeight: '600', padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(192,80,90,0.3)', background: 'rgba(192,80,90,0.08)', color: '#c0505a', cursor: 'pointer' }}>Révoquer</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
 export default AdminSettings;

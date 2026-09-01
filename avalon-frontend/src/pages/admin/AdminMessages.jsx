@@ -1,237 +1,140 @@
-import React, { useState, useEffect, useContext } from 'react';
-import AdminLayout from './AdminLayout';
-import { AuthContext } from '../../context/AuthContext';
-import { API_URL } from '../../config';
+import React, { useState } from 'react';
+import { Download, CreditCard, Smartphone, Waves } from 'lucide-react';
+import AdminSidebar from './AdminSidebar';
+
+const STATS = [
+  { icon: CreditCard, label: 'STRIPE', tx: 28, montant: '€ 9 842', color: '#4a7fc2' },
+  { icon: null, label: 'PAYPAL', tx: 12, montant: '€ 2 340', color: '#22d3ee', isPaypal: true },
+  { icon: Smartphone, label: 'MTN MOBILE MONEY', tx: 18, montant: 'XOF 8.2M', color: '#c9a94e' },
+  { icon: Waves, label: 'WAVE', tx: 14, montant: 'XOF 5.7M', color: '#6a9e6a' },
+];
+
+const TRANSACTIONS = [
+  { id: 'TXN-8821', user: 'Moussa Diallo', parcours: 'Pentest Web', methode: 'Stripe', montant: '€ 189', date: '20 août 2026', statut: 'Payé' },
+  { id: 'TXN-8820', user: 'Fatou Sow', parcours: 'Threat Hunting', methode: 'Wave', montant: 'XOF 149 000', date: '20 août 2026', statut: 'Payé' },
+  { id: 'TXN-8819', user: 'Kofi Mensah', parcours: 'Ethical Hacking', methode: 'MTN Mobile Money', montant: 'XOF 199 000', date: '19 août 2026', statut: 'Payé' },
+  { id: 'TXN-8818', user: 'Jean-Luc Martin', parcours: 'RGPD & Conformité', methode: 'PayPal', montant: '€ 99', date: '19 août 2026', statut: 'Remboursé' },
+  { id: 'TXN-8817', user: 'Ama Owusu', parcours: 'SOC Analyst L1', methode: 'Stripe', montant: '€ 149', date: '18 août 2026', statut: 'Payé' },
+  { id: 'TXN-8816', user: 'Ibrahim Touré', parcours: 'ISO 27001 Lead', methode: 'Stripe', montant: '€ 295', date: '18 août 2026', statut: 'Payé' },
+  { id: 'TXN-8815', user: 'Seun Adeyemi', parcours: 'AD Attacks', methode: 'PayPal', montant: '€ 219', date: '17 août 2026', statut: 'Échoué' },
+];
+
+const FILTRES_METHODE = ['Toutes méthodes', 'Stripe', 'PayPal', 'MTN Mobile Money', 'Wave'];
+const FILTRES_PERIODE = ['7j', '30j', '90j'];
+
+const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' };
+
+const statutStyle = (s) => {
+  if (s === 'Payé') return { color: '#6a9e6a', bg: 'rgba(106,158,106,0.15)' };
+  if (s === 'Remboursé') return { color: '#8A93A6', bg: 'rgba(138,147,166,0.15)' };
+  return { color: '#c0505a', bg: 'rgba(192,80,90,0.15)' };
+};
 
 const AdminMessages = () => {
-  const { token } = useContext(AuthContext);
-  const authHeaders = { Authorization: `Bearer ${token}` };
-  const [messages, setMessages] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [replyingId, setReplyingId] = useState(null);
-  const [replyText, setReplyText] = useState('');
-  const [sendingReply, setSendingReply] = useState(false);
-  const [replyMsg, setReplyMsg] = useState('');
+  const [activeMethode, setActiveMethode] = useState('Toutes méthodes');
+  const [activePeriode, setActivePeriode] = useState('30j');
 
-  const [showCompose, setShowCompose] = useState(false);
-  const [selectedUserIds, setSelectedUserIds] = useState([]);
-  const [composeSubject, setComposeSubject] = useState('');
-  const [composeMessage, setComposeMessage] = useState('');
-  const [sendingCompose, setSendingCompose] = useState(false);
-  const [composeMsg, setComposeMsg] = useState('');
-  const [selectAll, setSelectAll] = useState(false);
-
-  useEffect(() => {
-    fetch(`${API_URL}/contact/`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : [])
-      .then(setMessages);
-    fetch(`${API_URL}/admin/users`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : [])
-      .then(setUsers);
-  }, []);
-
-  const resolveMessage = async (id) => {
-    await fetch(`${API_URL}/contact/${id}/resolve`, { method: 'PUT', headers: authHeaders });
-    setMessages(messages.map(m => m.id === id ? { ...m, resolved: true } : m));
-  };
-
-  const sendReply = async (messageId) => {
-    setSendingReply(true);
-    setReplyMsg('');
-    try {
-      const res = await fetch(`${API_URL}/contact/${messageId}/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ reply: replyText }),
-      });
-      if (!res.ok) throw new Error();
-      setReplyMsg('✓ Réponse envoyée.');
-      setReplyingId(null);
-      setReplyText('');
-      setMessages(messages.map(m => m.id === messageId ? { ...m, resolved: true } : m));
-      setTimeout(() => setReplyMsg(''), 3000);
-    } catch {
-      setReplyMsg('Erreur lors de l\'envoi.');
-    } finally {
-      setSendingReply(false);
-    }
-  };
-
-  const toggleUser = (userId) => {
-    setSelectedUserIds(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedUserIds([]);
-    } else {
-      setSelectedUserIds(users.map(u => u.id));
-    }
-    setSelectAll(!selectAll);
-  };
-
-  const sendCompose = async () => {
-    if (!composeSubject || !composeMessage || selectedUserIds.length === 0) return;
-    setSendingCompose(true);
-    setComposeMsg('');
-    try {
-      const res = await fetch(`${API_URL}/contact/admin/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({
-          user_ids: selectedUserIds,
-          subject: composeSubject,
-          message: composeMessage,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      setComposeMsg(`✓ Message envoyé à ${selectedUserIds.length} utilisateur(s).`);
-      setComposeSubject('');
-      setComposeMessage('');
-      setSelectedUserIds([]);
-      setSelectAll(false);
-      setShowCompose(false);
-      setTimeout(() => setComposeMsg(''), 4000);
-    } catch {
-      setComposeMsg('Erreur lors de l\'envoi.');
-    } finally {
-      setSendingCompose(false);
-    }
-  };
+  const filtered = TRANSACTIONS.filter(t =>
+    activeMethode === 'Toutes méthodes' || t.methode === activeMethode
+  );
 
   return (
-    <AdminLayout title="Messages">
-      <div className="space-y-6">
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #080d1a 0%, #0d0f2b 100%)', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      <AdminSidebar />
+      <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
 
-        {/* Bouton composer */}
-        <div className="flex items-center justify-between">
-          <p className="text-muted text-sm">{messages.length} message(s) reçu(s)</p>
-          <button onClick={() => setShowCompose(!showCompose)}
-            className="bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-shadow">
-            {showCompose ? 'Fermer' : '+ Nouveau message'}
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <div>
+            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: 0 }}>Paiements & Transactions</h1>
+            <p style={{ fontSize: '13px', color: '#8A93A6', marginTop: '4px' }}>Vue par méthode de paiement</p>
+          </div>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: '8px', padding: '10px 18px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+            <Download size={14} /> Exporter
           </button>
         </div>
 
-        {composeMsg && (
-          <div className={`text-sm rounded-lg px-4 py-3 ${composeMsg.startsWith('✓') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-            {composeMsg}
-          </div>
-        )}
-
-        {/* Formulaire de composition */}
-        {showCompose && (
-          <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-4">
-            <h3 className="text-sm font-bold text-white border-b border-white/10 pb-4">Envoyer un message</h3>
-
-            {/* Sélection des destinataires */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-slate-400">Destinataires ({selectedUserIds.length} sélectionné(s))</label>
-                <button onClick={toggleSelectAll} className="text-xs text-primary-light hover:text-white font-semibold">
-                  {selectAll ? 'Tout désélectionner' : 'Tout sélectionner'}
-                </button>
+        {/* Cartes stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '24px' }}>
+          {STATS.map((s, i) => (
+            <div key={i} style={{ ...card, padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                <span style={{ fontSize: '11px', color: '#8A93A6', fontWeight: '600' }}>{s.tx} tx</span>
               </div>
-              <div className="bg-white/[0.02] border border-white/10 rounded-lg max-h-48 overflow-y-auto">
-                {users.map(u => (
-                  <label key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0">
-                    <input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleUser(u.id)} className="accent-primary" />
-                    <div>
-                      <p className="text-sm text-white">{u.first_name || ''} {u.last_name || ''}</p>
-                      <p className="text-xs text-muted">{u.email}</p>
-                    </div>
-                    <span className={`ml-auto text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-primary/10 text-primary-light' : 'bg-white/5 text-muted'}`}>
-                      {u.role}
-                    </span>
-                  </label>
-                ))}
+              <div style={{ marginBottom: '8px' }}>
+                {s.isPaypal
+                  ? <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#0070ba', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '900', color: '#fff' }}>P</div>
+                  : <s.icon size={28} color={s.color} />
+                }
               </div>
+              <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6', marginBottom: '8px' }}>{s.label}</div>
+              <div style={{ fontSize: '24px', fontWeight: '800', color: s.color }}>{s.montant}</div>
             </div>
+          ))}
+        </div>
 
-            <input type="text" placeholder="Objet du message" value={composeSubject}
-              onChange={(e) => setComposeSubject(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50" />
-
-            <textarea rows="5" placeholder="Contenu du message..." value={composeMessage}
-              onChange={(e) => setComposeMessage(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50 resize-none" />
-
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted">{selectedUserIds.length} destinataire(s) sélectionné(s)</p>
-              <button onClick={sendCompose} disabled={sendingCompose || !composeSubject || !composeMessage || selectedUserIds.length === 0}
-                className="bg-gradient-to-r from-primary to-primary-dark disabled:opacity-50 text-white font-semibold px-6 py-2.5 rounded-lg text-sm">
-                {sendingCompose ? 'Envoi...' : 'Envoyer'}
-              </button>
-            </div>
+        {/* Filtres */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {FILTRES_METHODE.map(f => (
+              <button key={f} onClick={() => setActiveMethode(f)} style={{
+                padding: '8px 14px', borderRadius: '8px',
+                background: activeMethode === f ? '#3b6ea5' : 'rgba(255,255,255,0.06)',
+                border: activeMethode === f ? '1px solid rgba(59,110,165,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                color: activeMethode === f ? '#fff' : '#8A93A6',
+                fontSize: '13px', fontWeight: activeMethode === f ? '600' : '400', cursor: 'pointer',
+              }}>{f}</button>
+            ))}
           </div>
-        )}
-
-        {/* Messages reçus */}
-        <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-white/10">
-            <h3 className="text-sm font-bold text-white">Messages reçus</h3>
-          </div>
-
-          {replyMsg && (
-            <div className={`mx-6 mt-4 text-sm rounded-lg px-4 py-3 ${replyMsg.startsWith('✓') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-              {replyMsg}
-            </div>
-          )}
-
-          <div className="divide-y divide-white/5">
-            {messages.length > 0 ? messages.map(m => (
-              <div key={m.id} className="p-6 space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="text-white font-semibold text-sm">{m.email}</p>
-                      <span className="text-muted text-xs">— {m.subject}</span>
-                      {m.resolved && <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">Traité</span>}
-                    </div>
-                    <p className="text-slate-400 text-sm leading-relaxed">{m.message}</p>
-                  </div>
-                </div>
-
-                {replyingId === m.id ? (
-                  <div className="space-y-3 pt-3 border-t border-white/10">
-                    <textarea rows="3" placeholder="Votre réponse..." value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/10 text-white px-4 py-3 rounded-lg text-sm outline-none focus:border-primary/50 resize-none" />
-                    <div className="flex gap-2">
-                      <button onClick={() => sendReply(m.id)} disabled={sendingReply || !replyText}
-                        className="bg-gradient-to-r from-primary to-primary-dark disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-lg">
-                        {sendingReply ? 'Envoi...' : 'Envoyer la réponse'}
-                      </button>
-                      <button onClick={() => { setReplyingId(null); setReplyText(''); }}
-                        className="text-slate-400 hover:text-white text-sm font-semibold px-4 py-2">
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex gap-3 pt-2">
-                    <button onClick={() => { setReplyingId(m.id); setReplyText(''); }}
-                      className="text-primary-light hover:text-white text-xs font-semibold uppercase">
-                      Répondre
-                    </button>
-                    {!m.resolved && (
-                      <button onClick={() => resolveMessage(m.id)}
-                        className="text-slate-500 hover:text-slate-300 text-xs font-semibold uppercase">
-                        Marquer traité
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )) : (
-              <div className="p-6 text-center text-slate-600 text-sm">Aucun message pour l'instant.</div>
-            )}
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {FILTRES_PERIODE.map(p => (
+              <button key={p} onClick={() => setActivePeriode(p)} style={{
+                padding: '8px 14px', borderRadius: '8px',
+                background: activePeriode === p ? '#3b6ea5' : 'rgba(255,255,255,0.06)',
+                border: activePeriode === p ? '1px solid rgba(59,110,165,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                color: activePeriode === p ? '#fff' : '#8A93A6',
+                fontSize: '13px', fontWeight: activePeriode === p ? '600' : '400', cursor: 'pointer',
+              }}>{p}</button>
+            ))}
           </div>
         </div>
 
+        {/* Tableau */}
+        <div style={{ ...card, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                {['ID','UTILISATEUR','PARCOURS','MÉTHODE','MONTANT','DATE','STATUT',''].map((h,i) => (
+                  <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t, i) => {
+                const s = statutStyle(t.statut);
+                return (
+                  <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '600', color: '#4a7fc2' }}>{t.id}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '600', color: '#fff' }}>{t.user}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '13px', color: '#fff' }}>{t.parcours}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '13px', color: '#8A93A6' }}>{t.methode}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: '700', color: t.statut === 'Échoué' ? '#c0505a' : '#6a9e6a' }}>{t.montant}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '13px', color: '#8A93A6' }}>{t.date}</td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', color: s.color, background: s.bg }}>{t.statut}</span>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <button style={{ fontSize: '12px', fontWeight: '600', padding: '6px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>Détail</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
+
 export default AdminMessages;

@@ -1,132 +1,117 @@
-import React, { useContext, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import {
-  LayoutDashboard, BookOpen, Target, FileCheck,
-  Users, CreditCard, MessageSquare, Shield, LogOut, Menu, X, Settings
-} from 'lucide-react';
-import { AuthContext } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import AdminSidebar from './AdminSidebar';
 
-const NAV_ITEMS = [
-  { path: '/admin', label: 'Vue d\'ensemble', icon: LayoutDashboard, exact: true },
-  { path: '/admin/courses', label: 'Parcours', icon: BookOpen },
-  { path: '/admin/submissions', label: 'Livrables', icon: FileCheck },
-  { path: '/admin/users', label: 'Utilisateurs', icon: Users },
-  { path: '/admin/payments', label: 'Paiements', icon: CreditCard },
-  { path: '/admin/messages', label: 'Messages', icon: MessageSquare },
-  { path: '/admin/settings', label: 'Réglages', icon: Settings },
-];
+const Toggle = ({ on, onToggle }) => (
+  <div onClick={onToggle} style={{ width: '38px', height: '22px', borderRadius: '11px', background: on ? '#3b6ea5' : 'rgba(255,255,255,0.15)', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+    <div style={{ position: 'absolute', top: '3px', left: on ? '19px' : '3px', width: '16px', height: '16px', borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+  </div>
+);
 
-const AdminLayout = ({ children, title }) => {
-  const { logout, user } = useContext(AuthContext);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+const card = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '24px' };
+const inputStyle = { width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
+const labelStyle = { fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6', marginBottom: '8px', display: 'block' };
 
-  const isActive = (item) => {
-    if (item.exact) return location.pathname === item.path;
-    return location.pathname.startsWith(item.path);
-  };
+const INTEGRATIONS = ['Stripe Webhook', 'SendGrid Email', 'Cloudflare CDN'];
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+const AdminLayout = () => {
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [toggles, setToggles] = useState({ fr: true, en: true, welcome: true, alertes: true, rappels: false });
+  const flip = (key) => setToggles(prev => ({ ...prev, [key]: !prev[key] }));
 
   return (
-    <div className="min-h-screen flex text-white">
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'linear-gradient(135deg, #080d1a 0%, #0d0f2b 100%)', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      <AdminSidebar />
+      <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
 
-      <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-white/10 fixed top-0 left-0 h-full z-40">
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-light to-accent flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-            <Shield size={15} className="text-white" />
-          </div>
-          <div>
-            <p className="font-display text-sm font-bold text-white leading-none">GUARDIAN</p>
-            <p className="text-[10px] text-primary-light font-semibold tracking-wide">ADMIN</p>
-          </div>
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', margin: 0 }}>Paramètres</h1>
+          <p style={{ fontSize: '13px', color: '#8A93A6', marginTop: '4px' }}>Configuration de la plateforme</p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item);
-            return (
-              <Link key={item.path} to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                  active
-                    ? 'bg-primary/15 text-primary-light border border-primary/25'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                }`}>
-                <Icon size={17} className={active ? 'text-primary-light' : 'text-slate-500'} />
-                {item.label}
-                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-light"></div>}
-              </Link>
-            );
-          })}
-        </nav>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px' }}>
 
-        <div className="px-3 py-4 border-t border-white/10 space-y-2">
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-light to-accent flex items-center justify-center text-xs font-bold text-white">
-              {user?.email?.[0]?.toUpperCase() || 'A'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{user?.email}</p>
-              <p className="text-[10px] text-muted">Administrateur</p>
-            </div>
-          </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
-            <LogOut size={17} />
-            Déconnexion
-          </button>
-        </div>
-      </aside>
-
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-surface border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-light to-accent flex items-center justify-center">
-            <Shield size={13} className="text-white" />
-          </div>
-          <span className="font-display text-sm font-bold text-white">ADMIN</span>
-        </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white">
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </div>
-
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-base/95 backdrop-blur-xl pt-16 px-4 pb-4 overflow-y-auto">
-          <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item);
-              return (
-                <Link key={item.path} to={item.path} onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
-                    active ? 'bg-primary/15 text-primary-light' : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}>
-                  <Icon size={18} />
-                  {item.label}
-                </Link>
-              );
-            })}
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-500/10 transition-colors">
-              <LogOut size={18} />
-              Déconnexion
+          {/* Langues */}
+          <div style={card}>
+            <p style={{ ...labelStyle, marginBottom: '16px' }}>LANGUES DE CONTENU</p>
+            {[{ key: 'fr', nom: 'Français', desc: 'Contenu disponible en FR' }, { key: 'en', nom: 'English', desc: 'Contenu disponible en EN' }].map(lang => (
+              <div key={lang.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{lang.nom}</div>
+                  <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>{lang.desc}</div>
+                </div>
+                <Toggle on={toggles[lang.key]} onToggle={() => flip(lang.key)} />
+              </div>
+            ))}
+            <button style={{ marginTop: '16px', width: '100%', padding: '10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#8A93A6', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>
+              + Ajouter une langue
             </button>
-          </nav>
-        </div>
-      )}
+          </div>
 
-      <main className="flex-1 md:ml-64">
-        <div className="md:hidden h-14"></div>
-        <div className="p-6 md:p-8">
-          {title && (
-            <div className="mb-8 pb-6 border-b border-white/10">
-              <h1 className="font-display text-2xl font-bold text-white">{title}</h1>
+          {/* Paramètres généraux */}
+          <div style={card}>
+            <p style={{ ...labelStyle, marginBottom: '16px' }}>PARAMÈTRES GÉNÉRAUX</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {[
+                { label: 'NOM DE LA PLATEFORME', value: 'GUARDIAN CYBER LABS' },
+                { label: 'URL DE BASE', value: 'https://guardiancyberlabs.com' },
+                { label: 'EMAIL DE CONTACT', value: 'admin@guardiancyberlabs.com' },
+              ].map(f => (
+                <div key={f.label}>
+                  <label style={labelStyle}>{f.label}</label>
+                  <input defaultValue={f.value} style={inputStyle} />
+                </div>
+              ))}
             </div>
-          )}
-          {children}
+          </div>
+
+          {/* Notifications */}
+          <div style={card}>
+            <p style={{ ...labelStyle, marginBottom: '16px' }}>NOTIFICATIONS</p>
+            {[
+              { key: 'welcome', nom: 'Emails de bienvenue', desc: "Envoyé à l'inscription" },
+              { key: 'alertes', nom: 'Alertes nouvelles soumissions', desc: 'Notifie les correcteurs' },
+              { key: 'rappels', nom: 'Rappels de complétion', desc: 'J+7 si progression < 30%' },
+            ].map(n => (
+              <div key={n.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{n.nom}</div>
+                  <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>{n.desc}</div>
+                </div>
+                <Toggle on={toggles[n.key]} onToggle={() => flip(n.key)} />
+              </div>
+            ))}
+          </div>
+
+          {/* API & Intégrations */}
+          <div style={card}>
+            <p style={{ ...labelStyle, marginBottom: '16px' }}>API & INTÉGRATIONS</p>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={labelStyle}>CLÉ API</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input readOnly value={showApiKey ? 'gcl_live_sk_8a3f9b2e1c7d4a6f8e2b5c9d1a3e7f4b' : '••••••••••••••••••••••••••••••••'} style={{ ...inputStyle, flex: 1, fontFamily: 'monospace', fontSize: '12px' }} />
+                <button onClick={() => setShowApiKey(!showApiKey)} style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#8A93A6', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+            {INTEGRATIONS.map((integ, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < INTEGRATIONS.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{integ}</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', color: '#6a9e6a', background: 'rgba(106,158,106,0.15)' }}>Actif</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
+
+        {/* Boutons bas */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <button style={{ padding: '11px 24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', color: '#8A93A6', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Annuler</button>
+          <button style={{ padding: '11px 24px', background: '#3b6ea5', border: '1px solid rgba(59,110,165,0.4)', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Sauvegarder les paramètres</button>
+        </div>
+      </div>
     </div>
   );
 };
+
 export default AdminLayout;
