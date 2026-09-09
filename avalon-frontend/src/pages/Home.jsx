@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Search } from 'lucide-react';
+import { ArrowRight, Search, Award, Star, Quote } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { LanguageContext } from '../context/LanguageContext';
 import { useSettings } from '../context/SettingsContext';
+import { API_URL } from '../config';
 
 const TERMINAL_LINES = [
   { text: '$ whoami', color: 'text-emerald-400' },
@@ -200,12 +201,111 @@ const FAMILIES = [
   { key: 'grc', label: 'GRC', count_fr: '7 parcours', count_en: '7 courses', desc_fr: 'Gouvernance, Risque & Conformité — ISO 27001, RGPD, audit', desc_en: 'Governance, Risk & Compliance — ISO 27001, GDPR, audit', range: 'Débutant → Avancé', tags: ['ISO 27001', 'RGPD', 'Audit', 'EBIOS RM'], palette: PALETTE.gold },
 ];
 
+const DOMAIN_META = {
+  red_team: { label_fr: 'Red Team', label_en: 'Red Team', palette: PALETTE.red },
+  blue_team: { label_fr: 'Blue Team', label_en: 'Blue Team', palette: PALETTE.blue },
+  grc: { label_fr: 'GRC', label_en: 'GRC', palette: PALETTE.gold },
+};
+
+const LEVEL_META = {
+  beginner: { label_fr: 'Débutant', label_en: 'Beginner' },
+  intermediate: { label_fr: 'Intermédiaire', label_en: 'Intermediate' },
+  advanced: { label_fr: 'Avancé', label_en: 'Advanced' },
+};
+
+// NOTE: témoignages de démonstration — à remplacer par de vrais retours d'apprenants.
+const TESTIMONIALS = [
+  {
+    name: 'Aissatou Bah',
+    role_fr: 'Pentester junior, ex-apprenante Pentest Web',
+    role_en: 'Junior Pentester, former Pentest Web student',
+    domain: 'red_team',
+    rating: 5,
+    quote_fr: "Les livrables corrigés par des humains font toute la différence. J'ai eu des retours précis sur mes rapports de pentest, pas juste un score automatique.",
+    quote_en: 'Having deliverables graded by humans makes all the difference. I got precise feedback on my pentest reports, not just an automated score.',
+  },
+  {
+    name: 'Fatou Sow',
+    role_fr: 'Analyste SOC, parcours SOC Analyst L1',
+    role_en: 'SOC Analyst, SOC Analyst L1 track',
+    domain: 'blue_team',
+    rating: 5,
+    quote_fr: "Zéro prérequis annoncé, zéro prérequis réel. J'ai commencé sans bagage réseau et je suis aujourd'hui analyste SOC en poste.",
+    quote_en: "Zero prerequisites announced, zero prerequisites in practice. I started with no network background and I'm now working as a SOC analyst.",
+  },
+  {
+    name: 'Ibrahim Touré',
+    role_fr: 'Consultant GRC, ISO 27001 Lead Implementer',
+    role_en: 'GRC Consultant, ISO 27001 Lead Implementer',
+    domain: 'grc',
+    rating: 4,
+    quote_fr: "Le parcours ISO 27001 est concret : on manipule de vrais gabarits d'audit, pas des slides théoriques. Ça se voit direct en entretien.",
+    quote_en: 'The ISO 27001 track is hands-on: real audit templates, not theoretical slides. It shows immediately in interviews.',
+  },
+  {
+    name: 'Moussa Diallo',
+    role_fr: 'Étudiant en cybersécurité, parcours Pentest Mobile',
+    role_en: 'Cybersecurity student, Mobile Pentest track',
+    domain: 'red_team',
+    rating: 5,
+    quote_fr: "Venant d'un cursus non-tech, je pensais galérer. Le rythme progressif et les labs pratiques m'ont mis en confiance dès les premières semaines.",
+    quote_en: 'Coming from a non-tech background, I expected to struggle. The gradual pace and hands-on labs got me confident within the first weeks.',
+  },
+  {
+    name: 'Khadija El Amrani',
+    role_fr: 'Threat Hunter, parcours Threat Hunting & SIEM',
+    role_en: 'Threat Hunter, Threat Hunting & SIEM track',
+    domain: 'blue_team',
+    rating: 5,
+    quote_fr: "Les scénarios d'incident sont réalistes, avec de vrais logs à analyser. C'est exactement le genre de réflexe qu'on me demande maintenant au SOC.",
+    quote_en: 'The incident scenarios are realistic, with real logs to analyze. It built exactly the reflexes I now use daily at the SOC.',
+  },
+  {
+    name: 'Chinedu Okafor',
+    role_fr: 'DPO adjoint, parcours RGPD & Protection des données',
+    role_en: 'Deputy DPO, GDPR & Data Protection track',
+    domain: 'grc',
+    rating: 4,
+    quote_fr: "Formation dense mais jamais aride. Les études de cas sur des entreprises fictives m'ont vraiment aidé à structurer un plan de mise en conformité.",
+    quote_en: 'Dense training but never dry. The case studies on fictional companies really helped me structure a compliance roadmap.',
+  },
+  {
+    name: 'Léa Mbaye',
+    role_fr: 'Consultante offensive junior, parcours Active Directory Attack',
+    role_en: 'Junior Offensive Consultant, Active Directory Attack track',
+    domain: 'red_team',
+    rating: 5,
+    quote_fr: "Le module sur les attaques Active Directory est bluffant de réalisme. J'ai reproduit un Kerberoasting complet avant même de finir ma formation initiale.",
+    quote_en: 'The Active Directory attacks module is impressively realistic. I ran a full Kerberoasting attack before even finishing my initial training.',
+  },
+  {
+    name: 'Samuel Kponou',
+    role_fr: 'Ingénieur détection, parcours Purple Team Fundamentals',
+    role_en: 'Detection Engineer, Purple Team Fundamentals track',
+    domain: 'blue_team',
+    rating: 5,
+    quote_fr: "Comprendre l'attaque pour mieux construire la défense — c'est exactement ce que ce parcours m'a appris, avec des exercices croisés Red/Blue très malins.",
+    quote_en: 'Understanding the attack to build better defense — exactly what this track taught me, with clever cross Red/Blue exercises.',
+  },
+  {
+    name: 'Nadia Cissé',
+    role_fr: 'Auditrice junior, parcours EBIOS RM',
+    role_en: 'Junior Auditor, EBIOS RM track',
+    domain: 'grc',
+    rating: 5,
+    quote_fr: "La méthode EBIOS RM expliquée étape par étape, avec un vrai cas d'usage à traiter du début à la fin. Rien à voir avec un cours magistral classique.",
+    quote_en: 'The EBIOS RM methodology explained step by step, with a real use case to handle start to finish. Nothing like a classic lecture course.',
+  },
+];
+
 const Home = () => {
   const { language } = useContext(LanguageContext);
   const { settings } = useSettings();
   const fr = language === 'fr';
   const [search, setSearch] = useState('');
   const searchRef = useRef(null);
+  const [certificates, setCertificates] = useState([]);
+  const [certsLoading, setCertsLoading] = useState(true);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -214,6 +314,21 @@ const Home = () => {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/certificates/public`)
+      .then(res => (res.ok ? res.json() : []))
+      .then(data => { if (!cancelled) setCertificates(data.slice(0, 4)); })
+      .catch(() => { if (!cancelled) setCertificates([]); })
+      .finally(() => { if (!cancelled) setCertsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const formatDate = (iso) => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString(fr ? 'fr-FR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
 
   return (
     <div className="min-h-screen text-white font-sans bg-base">
@@ -330,6 +445,135 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* TÉMOIGNAGES */}
+      <section className="py-20 border-b border-white/5 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <p className="font-mono text-xs text-primary tracking-widest mb-3">[ TÉMOIGNAGES ]</p>
+            <h2 className="font-display text-3xl font-bold">
+              {fr ? 'Ils sont passés par Guardian' : 'They went through Guardian'}
+            </h2>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes testimonial-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .testimonial-track {
+            animation: testimonial-scroll 60s linear infinite;
+          }
+          .testimonial-track:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
+
+        <div className="relative w-full">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 z-10"
+            style={{ background: 'linear-gradient(90deg, #0a0e17 0%, transparent 100%)' }} />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 z-10"
+            style={{ background: 'linear-gradient(270deg, #0a0e17 0%, transparent 100%)' }} />
+
+          <div className="testimonial-track flex gap-6 w-max px-6">
+            {[...TESTIMONIALS, ...TESTIMONIALS].map((t, idx) => {
+              const meta = DOMAIN_META[t.domain];
+              return (
+                <div key={`${t.name}-${idx}`}
+                  className="rounded-2xl overflow-hidden shrink-0"
+                  style={{ width: '340px', backgroundColor: `color-mix(in srgb, #0d1220 96%, ${meta.palette.main} 4%)` }}>
+                  <div style={{ height: '5px', backgroundColor: meta.palette.main }} />
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Quote size={20} style={{ color: meta.palette.text, opacity: 0.5 }} />
+                      <span className="font-mono text-[10px] px-2.5 py-1 rounded-full"
+                        style={{ color: meta.palette.text, border: `1px solid ${meta.palette.border}`, background: meta.palette.bg }}>
+                        {fr ? meta.label_fr : meta.label_en}
+                      </span>
+                    </div>
+                    <p className="text-slate-200 text-sm leading-relaxed mb-6" style={{ minHeight: '95px' }}>
+                      "{fr ? t.quote_fr : t.quote_en}"
+                    </p>
+                    <div className="flex items-center gap-1 mb-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} size={13}
+                          fill={i < t.rating ? meta.palette.text : 'none'}
+                          style={{ color: meta.palette.text, opacity: i < t.rating ? 1 : 0.3 }} />
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center font-mono text-xs font-bold shrink-0"
+                        style={{ color: meta.palette.text, background: meta.palette.bg, border: `1px solid ${meta.palette.border}` }}>
+                        {t.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-semibold">{t.name}</p>
+                        <p className="text-muted text-xs">{fr ? t.role_fr : t.role_en}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CERTIFICATS RÉCENTS */}
+      {!certsLoading && certificates.length > 0 && (
+        <section className="py-20 border-b border-white/5">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+              <div>
+                <p className="font-mono text-xs text-primary tracking-widest mb-3">[ CERTIFICATS ]</p>
+                <h2 className="font-display text-3xl font-bold">
+                  {fr ? 'Certifiés récemment' : 'Recently certified'}
+                </h2>
+              </div>
+              <Link to="/certificates"
+                className="font-semibold text-sm whitespace-nowrap flex items-center gap-1 shrink-0 transition-colors"
+                style={{ color: '#4a7fc2' }}>
+                {fr ? 'Voir tous les certifiés' : 'View all certified'} <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {certificates.map((cert) => {
+                const meta = DOMAIN_META[cert.domain] || DOMAIN_META.red_team;
+                const levelMeta = LEVEL_META[cert.level];
+                return (
+                  <div key={cert.code}
+                    className="rounded-2xl p-6 flex items-start gap-4"
+                    style={{ background: '#0d1220', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                      style={{ color: meta.palette.text, background: meta.palette.bg, border: `1px solid ${meta.palette.border}` }}>
+                      <Award size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white font-bold text-sm truncate">{cert.student_name}</p>
+                      <p className="text-muted text-sm truncate">{cert.course_title}</p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="font-mono text-[10px] px-2 py-0.5 rounded"
+                          style={{ color: meta.palette.text, border: `1px solid ${meta.palette.border}`, background: meta.palette.bg }}>
+                          {fr ? meta.label_fr : meta.label_en}
+                        </span>
+                        {levelMeta && (
+                          <span className="font-mono text-[10px] px-2 py-0.5 rounded text-muted"
+                            style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                            {fr ? levelMeta.label_fr : levelMeta.label_en}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-muted text-[11px] font-mono mt-2">{formatDate(cert.issued_at)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* COMMUNAUTÉ */}
       <section className="py-20 border-b border-white/5">
