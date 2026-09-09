@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Download, X, Check } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 
@@ -28,8 +28,11 @@ const card = {
 
 const AdminCorrectionDetail = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [criteres, setCriteres] = useState(CRITERES_INIT);
   const [commentaire, setCommentaire] = useState('');
+  const [message, setMessage] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const score = criteres.reduce((acc, c) => acc + (c.coche ? c.poids : 0), 0);
   const scoreColor = score >= 70 ? '#6a9e6a' : score >= 50 ? '#c9a94e' : '#c0505a';
@@ -38,59 +41,85 @@ const AdminCorrectionDetail = () => {
     setCriteres(prev => prev.map((c, idx) => idx === i ? { ...c, coche: !c.coche } : c));
   };
 
+  const handleGrade = (status) => {
+    setSaving(true);
+    setTimeout(() => {
+      setMessage({
+        type: status === 'validated' ? 'success' : 'error',
+        text: status === 'validated'
+          ? '✓ Livrable validé — certificat émis et email envoyé à l\'apprenant.'
+          : '✗ Livrable refusé — l\'apprenant a été notifié.',
+      });
+      setSaving(false);
+      setTimeout(() => navigate('/admin/users'), 2000);
+    }, 800);
+  };
+
   return (
     <div style={{
-      display: 'flex', minHeight: '100vh',
+      display: 'flex',
+      height: '100vh',
+      overflow: 'hidden',
       background: 'linear-gradient(135deg, #080d1a 0%, #0d0f2b 100%)',
-      color: '#fff', fontFamily: 'Inter, sans-serif',
+      color: '#fff',
+      fontFamily: 'Inter, sans-serif',
     }}>
       <AdminSidebar />
-
       <div style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
 
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', marginBottom: '24px',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={() => navigate('/admin/users')}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                background: 'none', border: 'none', color: '#8A93A6',
-                fontSize: '13px', cursor: 'pointer',
-              }}>
+            <button onClick={() => navigate('/admin/users')} style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'none', border: 'none', color: '#8A93A6',
+              fontSize: '13px', cursor: 'pointer',
+            }}>
               <ArrowLeft size={14} /> Retour à la file
             </button>
             <span style={{ color: '#8A93A6' }}>·</span>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>Livrable #2847</span>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>Livrable #{id}</span>
             <span style={{
               fontSize: '10px', fontWeight: '700', padding: '3px 8px',
               borderRadius: '4px', color: '#c0505a', background: 'rgba(192,80,90,0.15)',
             }}>RED TEAM</span>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={{
+            <button onClick={() => handleGrade('rejected')} disabled={saving} style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 16px', borderRadius: '8px',
               border: '1px solid rgba(192,80,90,0.4)',
               background: 'rgba(192,80,90,0.1)', color: '#c0505a',
-              fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+              fontSize: '13px', fontWeight: '600', cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.6 : 1,
             }}>
               <X size={13} /> Refuser
             </button>
-            <button style={{
+            <button onClick={() => handleGrade('validated')} disabled={saving} style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '9px 16px', borderRadius: '8px',
               border: '1px solid rgba(106,158,106,0.4)',
               background: 'rgba(106,158,106,0.15)', color: '#6a9e6a',
-              fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+              fontSize: '13px', fontWeight: '600', cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.6 : 1,
             }}>
               <Check size={13} /> Valider & Émettre certificat
             </button>
           </div>
         </div>
+
+        {/* Message retour */}
+        {message && (
+          <div style={{
+            padding: '14px 18px', borderRadius: '8px', marginBottom: '20px',
+            background: message.type === 'success' ? 'rgba(106,158,106,0.12)' : 'rgba(192,80,90,0.12)',
+            border: `1px solid ${message.type === 'success' ? 'rgba(106,158,106,0.3)' : 'rgba(192,80,90,0.3)'}`,
+            color: message.type === 'success' ? '#6a9e6a' : '#c0505a',
+            fontSize: '13px', fontWeight: '600',
+          }}>
+            {message.text}
+          </div>
+        )}
 
         {/* Corps 2 colonnes */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px' }}>
@@ -121,49 +150,30 @@ const AdminCorrectionDetail = () => {
               </div>
             </div>
 
-            {/* Contenu rapport terminal */}
+            {/* Rapport terminal */}
             <div style={{
               ...card,
               background: 'rgba(0,0,0,0.3)',
               border: '1px solid rgba(255,255,255,0.06)',
-              fontFamily: 'monospace',
-              fontSize: '13px',
-              lineHeight: '1.7',
+              fontFamily: 'monospace', fontSize: '13px', lineHeight: '1.7',
             }}>
-              <div style={{
-                textAlign: 'center', color: '#4a7fc2',
-                fontWeight: '700', fontSize: '14px',
-                marginBottom: '16px', letterSpacing: '0.1em',
-              }}>
+              <div style={{ textAlign: 'center', color: '#4a7fc2', fontWeight: '700', fontSize: '14px', marginBottom: '16px', letterSpacing: '0.1em' }}>
                 RAPPORT DE TEST D'INTRUSION
               </div>
-
-              {/* Métadonnées */}
-              <div style={{
-                color: '#8A93A6', marginBottom: '20px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-                paddingBottom: '16px',
-              }}>
+              <div style={{ color: '#8A93A6', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '16px' }}>
                 <div><span style={{ color: '#4a7fc2' }}>Cible :</span> demo.vulnapp.local</div>
                 <div><span style={{ color: '#4a7fc2' }}>Durée :</span> 72h (black-box)</div>
                 <div><span style={{ color: '#4a7fc2' }}>Auteur :</span> Aissatou Bah</div>
                 <div><span style={{ color: '#4a7fc2' }}>Date :</span> 17 août 2026</div>
               </div>
 
-              {/* Section 1 */}
-              <div style={{ color: '#4a7fc2', fontWeight: '700', marginBottom: '8px' }}>
-                ## 1. RÉSUMÉ EXÉCUTIF
-              </div>
+              <div style={{ color: '#4a7fc2', fontWeight: '700', marginBottom: '8px' }}>## 1. RÉSUMÉ EXÉCUTIF</div>
               <div style={{ color: '#c8cdd6', marginBottom: '20px' }}>
-                L'audit a révélé 3 vulnérabilités critiques permettant une compromission totale
-                de l'application cible. Les failles d'injection SQL et XSS stocké constituent
-                les risques les plus immédiats pour la confidentialité et l'intégrité des données.
+                L'audit a révélé 3 vulnérabilités critiques permettant une compromission totale de l'application cible.
+                Les failles d'injection SQL et XSS stocké constituent les risques les plus immédiats.
               </div>
 
-              {/* Section 2 */}
-              <div style={{ color: '#4a7fc2', fontWeight: '700', marginBottom: '12px' }}>
-                ## 2. VECTEURS D'ATTAQUE IDENTIFIÉS
-              </div>
+              <div style={{ color: '#4a7fc2', fontWeight: '700', marginBottom: '12px' }}>## 2. VECTEURS D'ATTAQUE IDENTIFIÉS</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                 {VULNERABILITES.map((v, i) => (
                   <div key={i} style={{
@@ -172,28 +182,17 @@ const AdminCorrectionDetail = () => {
                     border: `1px solid ${v.critique ? 'rgba(192,80,90,0.2)' : 'rgba(201,169,78,0.2)'}`,
                     display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
                   }}>
-                    <span style={{ color: v.critique ? '#c0505a' : '#c9a94e', fontWeight: '700', minWidth: '130px' }}>
-                      {v.cve}
-                    </span>
+                    <span style={{ color: v.critique ? '#c0505a' : '#c9a94e', fontWeight: '700', minWidth: '130px' }}>{v.cve}</span>
                     <span style={{ color: '#8A93A6' }}>·</span>
                     <span style={{ color: '#c8cdd6' }}>{v.type}</span>
                     <span style={{ color: '#8A93A6' }}>{v.lieu}</span>
-                    <span style={{ marginLeft: 'auto', color: v.critique ? '#c0505a' : '#c9a94e', fontWeight: '700' }}>
-                      CVSS {v.cvss}
-                    </span>
+                    <span style={{ marginLeft: 'auto', color: v.critique ? '#c0505a' : '#c9a94e', fontWeight: '700' }}>CVSS {v.cvss}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Section 3 */}
-              <div style={{ color: '#4a7fc2', fontWeight: '700', marginBottom: '12px' }}>
-                ## 3. PROOF OF CONCEPT
-              </div>
-              <div style={{
-                background: 'rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: '6px', padding: '14px',
-              }}>
+              <div style={{ color: '#4a7fc2', fontWeight: '700', marginBottom: '12px' }}>## 3. PROOF OF CONCEPT</div>
+              <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', padding: '14px' }}>
                 <div style={{ color: '#6a9e6a' }}>POST /api/users HTTP/1.1</div>
                 <div style={{ color: '#6a9e6a' }}>Host: demo.vulnapp.local</div>
                 <div style={{ color: '#6a9e6a' }}>Content-Type: application/x-www-form-urlencoded</div>
@@ -204,10 +203,7 @@ const AdminCorrectionDetail = () => {
 
             {/* Commentaire */}
             <div style={card}>
-              <div style={{
-                fontSize: '10px', fontWeight: '700',
-                letterSpacing: '0.1em', color: '#8A93A6', marginBottom: '10px',
-              }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6', marginBottom: '10px' }}>
                 COMMENTAIRE AU CANDIDAT
               </div>
               <textarea
@@ -233,16 +229,9 @@ const AdminCorrectionDetail = () => {
 
             {/* Grille */}
             <div style={card}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                alignItems: 'center', marginBottom: '16px',
-              }}>
-                <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>
-                  GRILLE RED TEAM
-                </span>
-                <span style={{ fontSize: '18px', fontWeight: '800', color: scoreColor }}>
-                  {score}/100
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>GRILLE RED TEAM</span>
+                <span style={{ fontSize: '18px', fontWeight: '800', color: scoreColor }}>{score}/100</span>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -264,23 +253,15 @@ const AdminCorrectionDetail = () => {
                       {c.coche && <Check size={11} color="#6a9e6a" />}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#fff', lineHeight: '1.4' }}>
-                        {c.label}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>
-                        Poids : {c.poids}pts
-                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: '#fff', lineHeight: '1.4' }}>{c.label}</div>
+                      <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>Poids : {c.poids}pts</div>
                     </div>
                     {c.coche && <Check size={13} color="#6a9e6a" style={{ flexShrink: 0, marginTop: '2px' }} />}
                   </div>
                 ))}
               </div>
 
-              {/* Résultat */}
-              <div style={{
-                borderTop: '1px solid rgba(255,255,255,0.08)',
-                marginTop: '16px', paddingTop: '16px',
-              }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: '16px', paddingTop: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <span style={{ fontSize: '12px', color: '#8A93A6' }}>Résultat</span>
                   <span style={{ fontSize: '20px', fontWeight: '800', color: scoreColor }}>{score}/100</span>
@@ -293,10 +274,7 @@ const AdminCorrectionDetail = () => {
 
             {/* Apprenant */}
             <div style={card}>
-              <div style={{
-                fontSize: '10px', fontWeight: '700',
-                letterSpacing: '0.1em', color: '#8A93A6', marginBottom: '14px',
-              }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6', marginBottom: '14px' }}>
                 APPRENANT
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
@@ -311,7 +289,6 @@ const AdminCorrectionDetail = () => {
                   <div style={{ fontSize: '11px', color: '#8A93A6' }}>aissatou.b@example.com</div>
                 </div>
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {[
                   { label: 'Parcours', value: 'Pentest Web' },

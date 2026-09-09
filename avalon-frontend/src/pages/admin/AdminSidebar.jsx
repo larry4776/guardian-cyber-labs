@@ -13,50 +13,45 @@ const SIDEBAR_ITEMS = [
   { label: 'Paramètres', icon: Settings, path: '/admin/layout' },
 ];
 
-const Logo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-      <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#3b6df0" strokeWidth="1.5" fill="rgba(59,109,240,0.08)" />
-      <polygon points="16,8 24,12 24,20 16,24 8,20 8,12" stroke="#3b6df0" strokeWidth="1" fill="none" />
-      <circle cx="16" cy="16" r="2.5" fill="#3b6df0" />
-    </svg>
-    <div>
-      <div style={{ fontSize: '13px', fontWeight: '800', letterSpacing: '0.1em', color: '#fff' }}>
-        GUARDIAN <span style={{ color: '#3b6df0' }}>CYBER LABS</span>
-      </div>
-    </div>
-  </div>
-);
-
 const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const isActive = (path) => {
-    if (path === '/admin') {
-      return location.pathname === '/admin' || location.pathname === '/admin/';
-    }
+    if (path === '/admin') return location.pathname === '/admin' || location.pathname === '/admin/';
     return location.pathname === path;
   };
 
   return (
     <div style={{
-      width: '240px', minWidth: '240px',
+      width: '240px',
+      minWidth: '240px',
+      height: '100vh',
+      position: 'sticky',
+      top: 0,
       background: 'rgba(255,255,255,0.03)',
       borderRight: '1px solid rgba(255,255,255,0.07)',
-      display: 'flex', flexDirection: 'column', padding: '24px 0',
-      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowY: 'auto',
     }}>
-
       {/* Logo */}
-      <div style={{ padding: '0 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <Logo />
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '6px 10px',
-        }}>
-          <span style={{ fontSize: '11px', color: '#8A93A6', fontWeight: '600', letterSpacing: '0.05em' }}>ADMIN</span>
-          <button style={{ fontSize: '10px', color: '#4a7fc2', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}>Changer</button>
+      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style={{ flexShrink: 0 }}>
+            <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#3b6df0" strokeWidth="1.5" fill="rgba(59,109,240,0.08)" />
+            <polygon points="16,8 24,12 24,20 16,24 8,20 8,12" stroke="#3b6df0" strokeWidth="1" fill="none" />
+            <circle cx="16" cy="16" r="2.5" fill="#3b6df0" />
+          </svg>
+          <span style={{
+            fontSize: '12px',
+            fontWeight: '800',
+            letterSpacing: '0.08em',
+            color: '#fff',
+            whiteSpace: 'nowrap',
+          }}>
+            GUARDIAN <span style={{ color: '#3b6df0' }}>CYBER LABS</span>
+          </span>
         </div>
       </div>
 
@@ -91,13 +86,14 @@ const AdminSidebar = () => {
 
       {/* Avatar */}
       <div style={{
-        padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.07)',
+        padding: '16px 20px',
+        borderTop: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', alignItems: 'center', gap: '10px',
       }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '50%', background: '#3b6df0',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px', fontWeight: '700', color: '#fff',
+          fontSize: '14px', fontWeight: '700', color: '#fff', flexShrink: 0,
         }}>A</div>
         <div>
           <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>Admin</div>
