@@ -34,10 +34,12 @@ const AdminSidebar = () => {
       display: 'flex',
       flexDirection: 'column',
       overflowY: 'auto',
+      flexShrink: 0,
     }}>
+
       {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none" style={{ flexShrink: 0 }}>
             <polygon points="16,2 30,9 30,23 16,30 2,23 2,9" stroke="#3b6df0" strokeWidth="1.5" fill="rgba(59,109,240,0.08)" />
             <polygon points="16,8 24,12 24,20 16,24 8,20 8,12" stroke="#3b6df0" strokeWidth="1" fill="none" />
@@ -52,6 +54,19 @@ const AdminSidebar = () => {
           }}>
             GUARDIAN <span style={{ color: '#3b6df0' }}>CYBER LABS</span>
           </span>
+        </div>
+
+        {/* Badge ADMIN + Changer */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '6px 10px',
+        }}>
+          <span style={{ fontSize: '11px', color: '#8A93A6', fontWeight: '600', letterSpacing: '0.05em' }}>ADMIN</span>
+          <button
+            onClick={() => window.open('/#/dashboard', '_blank')}
+            style={{ fontSize: '10px', color: '#4a7fc2', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}>
+            Changer
+          </button>
         </div>
       </div>
 

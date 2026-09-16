@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Search, BookOpen, Zap, HelpCircle, ChevronDown, X } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
+import AdminTopBar from '../../components/admin/AdminTopBar';
 import { CONTENU } from '../../data/courses';
-import { pageWrapper, mainContent, card, inputStyle, labelStyle, btnPrimary, btnSecondary } from '../../styles/theme';
+import { card, inputStyle, labelStyle, btnPrimary, btnSecondary } from '../../styles/theme';
 
 const TABS = ['Leçons', 'Quiz', 'Exercices'];
 
@@ -58,100 +59,96 @@ const AdminCourses = () => {
   };
 
   return (
-    <div style={pageWrapper}>
+    <div style={{
+      display: 'flex', height: '100vh', overflow: 'hidden',
+      background: 'linear-gradient(135deg, #080d1a 0%, #0d0f2b 100%)',
+      color: '#fff', fontFamily: 'Inter, sans-serif',
+    }}>
       <AdminSidebar />
-      <div style={mainContent}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: 0 }}>Gestion du contenu</h1>
-            <p style={{ fontSize: '13px', color: '#8A93A6', marginTop: '4px' }}>Leçons, quiz et exercices</p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnSecondary}>Importer</button>
-            <button style={btnPrimary} onClick={() => setShowModal(true)}>+ Nouvelle leçon</button>
-          </div>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
-        {/* Onglets */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '20px' }}>
-          {TABS.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              padding: '10px 20px', border: 'none', background: 'none',
-              color: activeTab === tab ? '#fff' : '#8A93A6',
-              fontSize: '14px', fontWeight: activeTab === tab ? '600' : '400',
-              cursor: 'pointer',
-              borderBottom: activeTab === tab ? '2px solid #3b6df0' : '2px solid transparent',
-              marginBottom: '-1px',
-            }}>{tab}</button>
-          ))}
-        </div>
+        <AdminTopBar title="Gestion du contenu" subtitle="Leçons, quiz et exercices">
+          <button style={btnSecondary}>Importer</button>
+          <button style={btnPrimary} onClick={() => setShowModal(true)}>+ Nouvelle leçon</button>
+        </AdminTopBar>
 
-        {/* Recherche */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#8A93A6' }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher une leçon…"
-              style={{ ...inputStyle, paddingLeft: '40px' }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select style={{ appearance: 'none', padding: '10px 36px 10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', cursor: 'pointer', outline: 'none' }}>
-              <option>Tous les parcours</option>
-              <option>Pentest Web</option>
-              <option>SOC Analyst L1</option>
-              <option>ISO 27001 Lead</option>
-            </select>
-            <ChevronDown size={14} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#8A93A6', pointerEvents: 'none' }} />
-          </div>
-        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }}>
 
-        {/* Tableau */}
-        <div style={{ ...card, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                {['TITRE', 'FAMILLE', 'TYPE', 'SKILL-TAGS', 'STATUT', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((item, i) => (
-                <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{item.titre}</div>
-                    <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>{item.parcours}</div>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', color: item.familleColor, background: item.familleBg }}>{item.famille}</span>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#8A93A6', fontSize: '13px' }}>
-                      <TypeIcon type={item.typeIcon} />{item.type}
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {item.tags.map((tag, ti) => (
-                        <span key={ti} style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', color: '#8A93A6', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>[{tag}]</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', color: '#6a9e6a', background: 'rgba(106,158,106,0.15)' }}>Actif</span>
-                  </td>
-                  <td style={{ padding: '14px 16px' }}>
-                    <button style={{ fontSize: '12px', fontWeight: '600', padding: '6px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>Éditer</button>
-                  </td>
+          {/* Onglets */}
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '20px' }}>
+            {TABS.map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                padding: '10px 20px', border: 'none', background: 'none',
+                color: activeTab === tab ? '#fff' : '#8A93A6',
+                fontSize: '14px', fontWeight: activeTab === tab ? '600' : '400',
+                cursor: 'pointer',
+                borderBottom: activeTab === tab ? '2px solid #3b6df0' : '2px solid transparent',
+                marginBottom: '-1px',
+              }}>{tab}</button>
+            ))}
+          </div>
+
+          {/* Recherche */}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <Search size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#8A93A6' }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher une leçon…" style={{ ...inputStyle, paddingLeft: '40px' }} />
+            </div>
+            <div style={{ position: 'relative' }}>
+              <select style={{ appearance: 'none', padding: '10px 36px 10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff', fontSize: '13px', cursor: 'pointer', outline: 'none' }}>
+                <option>Tous les parcours</option>
+                <option>Pentest Web</option>
+                <option>SOC Analyst L1</option>
+                <option>ISO 27001 Lead</option>
+              </select>
+              <ChevronDown size={14} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: '#8A93A6', pointerEvents: 'none' }} />
+            </div>
+          </div>
+
+          {/* Tableau */}
+          <div style={{ ...card, overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  {['TITRE', 'FAMILLE', 'TYPE', 'SKILL-TAGS', 'STATUT', ''].map((h, i) => (
+                    <th key={i} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', color: '#8A93A6' }}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((item, i) => (
+                  <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff' }}>{item.titre}</div>
+                      <div style={{ fontSize: '11px', color: '#8A93A6', marginTop: '2px' }}>{item.parcours}</div>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', color: item.familleColor, background: item.familleBg }}>{item.famille}</span>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#8A93A6', fontSize: '13px' }}>
+                        <TypeIcon type={item.typeIcon} />{item.type}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {item.tags.map((tag, ti) => (
+                          <span key={ti} style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', color: '#8A93A6', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>[{tag}]</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', color: '#6a9e6a', background: 'rgba(106,158,106,0.15)' }}>Actif</span>
+                    </td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <button style={{ fontSize: '12px', fontWeight: '600', padding: '6px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>Éditer</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -159,20 +156,17 @@ const AdminCourses = () => {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
           <div style={{ width: '520px', maxHeight: '90vh', overflowY: 'auto', background: 'linear-gradient(135deg, #0d1025 0%, #12103a 100%)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '28px' }}>
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', margin: 0, color: '#fff' }}>+ Nouvelle leçon</h2>
               <button onClick={() => { setShowModal(false); setForm(MODAL_INIT); }} style={{ background: 'none', border: 'none', color: '#8A93A6', cursor: 'pointer' }}>
                 <X size={20} />
               </button>
             </div>
-
             {success && (
               <div style={{ padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', background: 'rgba(106,158,106,0.12)', border: '1px solid rgba(106,158,106,0.3)', color: '#6a9e6a', fontSize: '13px', fontWeight: '600' }}>
                 ✓ Leçon ajoutée avec succès !
               </div>
             )}
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={labelStyle}>TITRE DE LA LEÇON *</label>

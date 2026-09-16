@@ -1,118 +1,488 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import ExerciseManager from '../components/ExerciseManager';
-import SubmissionsGrading from '../components/SubmissionsGrading';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Shield, BookOpen, Award, User, Edit2, ShieldCheck, Trophy, Hourglass } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { LanguageContext } from '../context/LanguageContext';
 import { API_URL } from '../config';
 
-const DOMAINS = [
-  { key: 'red_team', label: 'Red Team' },
-  { key: 'blue_team', label: 'Blue Team' },
-  { key: 'grc', label: 'GRC' },
-];
-const LEVELS = [
-  { key: 'beginner', label: 'Débutant' },
-  { key: 'intermediate', label: 'Intermédiaire' },
-  { key: 'advanced', label: 'Avancé' },
-];
+const BRAND = '#2563EB';
+const RED = '#EF4444';
+const RED_SOFT = '#F87171';
+const GREEN = '#22C55E';
+const AMBER = '#F59E0B';
+const GRAY = '#8B93A7';
+const BG = '#0B0F19';
+const CARD_BG = '#141A2A';
+const CARD_BORDER = '#232B3D';
 
-const EMPTY_COURSE = {
-  title_fr: '', title_en: '', description_fr: '', description_en: '', price: 0, is_free: false, domain: '', level: '',
-  status: 'draft', thumbnail_url: '', instructor_name: '', lessons: [],
-  rating: 0, reviews_count: 0, students_count: 0, is_bestseller: false
+const familleColor = (title) => {
+  const t = (title || '').toLowerCase();
+  if (t.includes('pentest') || t.includes('hacking') || t.includes('active directory') || t.includes('ethical'))
+    return { label: 'RED TEAM', color: RED };
+  if (t.includes('soc') || t.includes('siem') || t.includes('threat') || t.includes('forensi') || t.includes('blue'))
+    return { label: 'BLUE TEAM', color: '#4a7fc2' };
+  return { label: 'GRC', color: '#c9a94e' };
 };
 
-const PaymentSettingsSection = ({ authHeaders }) => {
-  const [methods, setMethods] = useState([]);
-  const [uploading, setUploading] = useState(null);
-  const [saveMsg, setSaveMsg] = useState('');
+/* ===== HEADER ===== */
+const Header = () => (
+  <div style={{
+    height: '60px', minHeight: '60px',
+    borderBottom: `1px solid ${CARD_BORDER}`,
+    display: 'flex', alignItems: 'center', padding: '0 28px',
+    background: BG,
+    flexShrink: 0,
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <Shield size={20} color={BRAND} />
+      <span style={{ fontSize: '13px', fontWeight: '800', letterSpacing: '0.05em', color: '#fff', whiteSpace: 'nowrap' }}>
+        GUARDIAN <span style={{ color: BRAND }}>CYBER LABS</span>
+      </span>
+    </div>
+  </div>
+);
 
-  const load = () => {
-    fetch(`${API_URL}/payment-methods/all`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : [])
-      .then(setMethods);
-  };
+/* ===== SIDEBAR ===== */
+const Sidebar = ({ activeTab, setActiveTab, user }) => {
+  const NAV = [
+    { id: 'espace', label: 'Mon espace', icon: Shield },
+    { id: 'parcours', label: 'Mes parcours', icon: BookOpen },
+    { id: 'certificats', label: 'Mes certificats', icon: Award },
+    { id: 'profil', label: 'Profil', icon: User },
+  ];
 
-  useEffect(() => { load(); }, []);
+  const displayName = user?.first_name || 'Kofi Mensah';
+  const track = user?.track || 'Red Team Track';
 
-  const updateField = (key, field, value) => {
-    setMethods(methods.map(m => m.key === key ? { ...m, [field]: value } : m));
-  };
+  return (
+    <div style={{
+      width: '220px', minWidth: '220px',
+      borderRight: `1px solid ${CARD_BORDER}`,
+      display: 'flex', flexDirection: 'column',
+      background: BG,
+      flexShrink: 0,
+      overflowY: 'auto',
+    }}>
+      <nav style={{ flex: 1, padding: '16px 8px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {NAV.map(({ id, label, icon: Icon }) => {
+          const active = activeTab === id;
+          return (
+            <button key={id} onClick={() => setActiveTab(id)} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 12px', borderRadius: '8px', border: 'none',
+              background: active ? 'rgba(37,99,235,0.25)' : 'transparent',
+              color: active ? '#DCE6FF' : GRAY,
+              cursor: 'pointer', textAlign: 'left', width: '100%',
+              fontSize: '13px', fontWeight: active ? '600' : '400',
+            }}>
+              <Icon size={15} style={{ flexShrink: 0 }} />
+              <span>{label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-  const handleLogoUpload = async (key, file) => {
-    if (!file) return;
-    setUploading(key);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API_URL}/uploads/image`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: formData,
-      });
-      const data = await res.json();
-      updateField(key, 'logo_url', `${API_URL}${data.url}`);
-    } catch {
-      alert("Échec de l'import du logo.");
-    } finally {
-      setUploading(null);
+      {/* Avatar en bas, style capture */}
+      <div style={{ padding: '16px', borderTop: `1px solid ${CARD_BORDER}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FB923C, #F472B6)',
+            display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: '14px', fontWeight: '700',
+            color: '#fff', flexShrink: 0,
+          }}>
+            {displayName[0].toUpperCase()}
+          </div>
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {displayName}
+            </div>
+            <div style={{ fontSize: '11px', color: GRAY, marginTop: '2px' }}>{track}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ===== MON ESPACE ===== */
+const MonEspace = ({ enrollments, loadingEnrollments, user }) => {
+  const firstName = user?.first_name || 'Kofi';
+
+  const STATS = [
+    { label: 'SKILLS VALIDÉS', value: '16', sub: 'sur 42 au total' },
+    { label: 'PARCOURS ACTIFS', value: '2', sub: 'Pentest Web · Ethical Hacking' },
+    { label: 'CERTIFICATS OBTENUS', value: '0', sub: '1 en cours de validation' },
+  ];
+
+  const JOURNAL = [
+    { done: true, tag: 'sql-injection', tagColor: RED_SOFT, when: "Aujourd'hui 09:41", text: 'Injection SQL avancée' },
+    { done: true, tag: 'owasp-top10', tagColor: RED_SOFT, when: "Aujourd'hui 08:12", text: 'Introduction Pentest Web' },
+    { done: true, tag: 'http-basics', tagColor: RED_SOFT, when: 'Hier 16:55', text: 'Protocole HTTP — fondamentaux' },
+    { done: true, tag: 'recon-passive', tagColor: '#A78BFA', when: 'Hier 14:30', text: 'Reconnaissance passive' },
+    { done: false, tag: 'xss', tagColor: RED_SOFT, when: '19 août 11:20', text: 'XSS — Reflected & Stored' },
+    { done: true, tag: 'dns-enum', tagColor: '#A78BFA', when: '18 août 15:00', text: 'Énumération DNS' },
+  ];
+
+  const BADGES = [
+    { name: 'SQL Slayer', tag: 'sql-injection', date: '20 août' },
+    { name: 'OWASP Pioneer', tag: 'owasp-top10', date: '20 août' },
+    { name: 'HTTP Master', tag: 'http-basics', date: '19 août' },
+    { name: 'Ghost Recon', tag: 'recon-passive', date: '19 août' },
+    { name: 'DNS Ranger', tag: 'dns-enum', date: '18 août' },
+  ];
+
+  const PARCOURS = [
+    { titre: 'Pentest Web', tag: 'RED TEAM', percent: 67, done: 12, total: 18 },
+    { titre: 'Ethical Hacking', tag: 'RED TEAM', percent: 20, done: 4, total: 20 },
+  ];
+
+  return (
+    <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', overflowX: 'hidden', padding: '28px 32px', boxSizing: 'border-box' }}>
+
+      <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#fff', margin: '0 0 6px' }}>
+        Bon retour, {firstName}.
+      </h1>
+      <p style={{ fontSize: '13px', color: GRAY, margin: '0 0 24px' }}>
+        Continue sur ta lancée — tu as validé <span style={{ color: RED, fontWeight: '700' }}>4 skills</span> cette semaine.
+      </p>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        gap: '16px', marginBottom: '24px',
+      }}>
+        {STATS.map((s, i) => (
+          <div key={i} style={{
+            background: CARD_BG,
+            border: `1px solid ${CARD_BORDER}`,
+            borderRadius: '14px', padding: '20px',
+            minWidth: 0, boxSizing: 'border-box',
+          }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '10px' }}>{s.label}</div>
+            <div style={{ fontSize: '32px', fontWeight: '800', color: '#F8FAFC' }}>{s.value}</div>
+            <div style={{ fontSize: '12px', color: GRAY, marginTop: '4px' }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '16px', marginBottom: '16px',
+      }}>
+
+        <div style={{
+          background: CARD_BG,
+          border: `1px solid ${CARD_BORDER}`,
+          borderRadius: '14px', padding: '20px',
+          minWidth: 0, boxSizing: 'border-box', overflow: 'hidden',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '14px', fontFamily: 'monospace' }}>
+            <span>&gt;_</span> JOURNAL DE PROGRESSION
+          </div>
+          <div style={{
+            background: 'rgba(0,0,0,0.3)', borderRadius: '10px', padding: '14px',
+            fontFamily: '"JetBrains Mono", "Fira Code", monospace', fontSize: '12px',
+          }}>
+            <div style={{ color: '#67E8F9', marginBottom: '12px', wordBreak: 'break-word' }}>
+              guardian@kofi-mensah:~/pentest-web$ skill-log --format=timeline
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {JOURNAL.map((j, i) => (
+                <div key={i}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ color: j.done ? GREEN : GRAY }}>{j.done ? '✓' : '○'}</span>
+                    <span style={{
+                      color: j.tagColor, border: `1px solid ${j.tagColor}66`,
+                      borderRadius: '6px', padding: '2px 8px', fontSize: '11px',
+                    }}>[{j.tag}]</span>
+                    <span style={{ color: GRAY, fontSize: '11px', marginLeft: 'auto' }}>{j.when}</span>
+                  </div>
+                  <div style={{ color: '#E2E8F0', fontSize: '12px', marginTop: '4px', paddingLeft: '22px' }}>{j.text}</div>
+                </div>
+              ))}
+              <div style={{ color: GRAY, fontSize: '12px', marginTop: '4px' }}>
+                → Prochain : <span style={{ color: RED_SOFT, border: `1px solid ${RED_SOFT}66`, borderRadius: '6px', padding: '2px 8px' }}>[xss-stored]</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          background: CARD_BG,
+          border: `1px solid ${CARD_BORDER}`,
+          borderRadius: '14px', padding: '20px',
+          minWidth: 0, boxSizing: 'border-box', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '14px' }}>
+            BADGES DE COMPÉTENCE
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {BADGES.map((b, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                background: 'rgba(255,255,255,0.03)', border: `1px solid ${CARD_BORDER}`,
+                borderRadius: '10px', padding: '10px 12px',
+              }}>
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '50%',
+                  background: 'rgba(148,163,184,0.15)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <ShieldCheck size={16} color="#94A3B8" />
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>{b.name}</div>
+                  <span style={{
+                    color: RED_SOFT, border: `1px solid ${RED_SOFT}66`,
+                    borderRadius: '6px', padding: '1px 8px', fontSize: '10px',
+                    fontFamily: 'monospace', display: 'inline-block', marginTop: '4px',
+                  }}>[{b.tag}]</span>
+                </div>
+                <span style={{ fontSize: '11px', color: GRAY, flexShrink: 0 }}>{b.date}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '10px' }}>
+              CERTIFICATION EN COURS
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '8px',
+                background: BRAND, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <Trophy size={16} color="#FCD34D" />
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>Pentest Web</div>
+                <div style={{ fontSize: '11px', color: GRAY }}>Livrable soumis · En attente de correction</div>
+              </div>
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(245,158,11,0.1)', border: `1px solid ${AMBER}55`,
+              borderRadius: '10px', padding: '10px 12px',
+            }}>
+              <Hourglass size={14} color={AMBER} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: AMBER }}>Correction sous 48h — soumis il y a 3j</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        background: CARD_BG,
+        border: `1px solid ${CARD_BORDER}`,
+        borderRadius: '14px', padding: '20px',
+        minWidth: 0, boxSizing: 'border-box',
+      }}>
+        <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '16px' }}>
+          PARCOURS EN COURS
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+          {PARCOURS.map((p, i) => (
+            <div key={i} style={{
+              background: 'rgba(255,255,255,0.03)', border: `1px solid ${CARD_BORDER}`,
+              borderRadius: '12px', padding: '18px', minWidth: 0, boxSizing: 'border-box',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', gap: '8px' }}>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: '#fff' }}>{p.titre}</div>
+                <span style={{
+                  fontSize: '10px', fontWeight: '700', color: RED,
+                  border: `1px solid ${RED}66`, borderRadius: '6px', padding: '3px 8px', flexShrink: 0,
+                }}>{p.tag}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <div style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '4px', height: '5px' }}>
+                  <div style={{ width: `${p.percent}%`, height: '100%', background: RED, borderRadius: '4px' }} />
+                </div>
+                <span style={{ fontSize: '12px', color: GRAY, flexShrink: 0 }}>{p.percent}%</span>
+              </div>
+              <div style={{ fontSize: '12px', color: GRAY, marginBottom: '12px' }}>{p.done} / {p.total} leçons complétées</div>
+              <button style={{
+                background: BRAND, color: '#fff', border: 'none', borderRadius: '8px',
+                padding: '9px 16px', fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                Continuer <ArrowRight size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ===== MES PARCOURS ===== */
+const MesParcours = ({ enrollments, loadingEnrollments }) => (
+  <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', overflowX: 'hidden', padding: '28px 32px', boxSizing: 'border-box' }}>
+    <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', margin: '0 0 4px' }}>Mes parcours</h1>
+    <p style={{ fontSize: '13px', color: GRAY, marginBottom: '28px' }}>Toutes vos formations en cours</p>
+    {loadingEnrollments ? (
+      <p style={{ color: GRAY, fontSize: '13px' }}>Chargement...</p>
+    ) : enrollments.length > 0 ? (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {enrollments.map(e => {
+          const percent = e.total_lessons > 0 ? Math.round((e.completed_lessons / e.total_lessons) * 100) : 0;
+          const fam = familleColor(e.course_title);
+          return (
+            <div key={e.course_id} style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: '16px', padding: '24px', minWidth: 0, boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 8px', borderRadius: '6px', color: fam.color, border: `1px solid ${fam.color}66` }}>
+                    {fam.label}
+                  </span>
+                  <h3 style={{ fontSize: '17px', fontWeight: '700', color: '#fff', margin: '10px 0 0' }}>{e.course_title}</h3>
+                </div>
+                <Link to={`/player/${e.course_id}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: BRAND, color: '#fff', fontWeight: '600', fontSize: '13px', padding: '10px 18px', borderRadius: '8px', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  Continuer <ArrowRight size={14} />
+                </Link>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '4px', height: '6px' }}>
+                <div style={{ width: `${percent}%`, height: '100%', background: fam.color, borderRadius: '4px' }} />
+              </div>
+              <p style={{ fontSize: '12px', color: GRAY, marginTop: '8px' }}>
+                {e.completed_lessons} / {e.total_lessons} leçons — {percent}% complété
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    ) : (
+      <div style={{ border: `1px dashed ${CARD_BORDER}`, borderRadius: '16px', padding: '48px', textAlign: 'center' }}>
+        <p style={{ color: GRAY, fontSize: '14px', marginBottom: '12px' }}>Aucune formation commencée.</p>
+        <Link to="/catalog" style={{ color: BRAND, fontWeight: '600', fontSize: '14px', textDecoration: 'none' }}>
+          Découvrir le catalogue →
+        </Link>
+      </div>
+    )}
+  </div>
+);
+
+/* ===== MES CERTIFICATS ===== */
+const MesCertificats = () => (
+  <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', overflowX: 'hidden', padding: '28px 32px', boxSizing: 'border-box' }}>
+    <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', margin: '0 0 4px' }}>Mes certificats</h1>
+    <p style={{ fontSize: '13px', color: GRAY, marginBottom: '28px' }}>Certifications obtenues</p>
+    <div style={{ border: `1px dashed ${CARD_BORDER}`, borderRadius: '16px', padding: '48px', textAlign: 'center' }}>
+      <Award size={40} style={{ color: GRAY, marginBottom: '12px' }} />
+      <p style={{ color: GRAY, fontSize: '14px' }}>Aucun certificat obtenu pour le moment.</p>
+    </div>
+  </div>
+);
+
+/* ===== PROFIL ===== */
+const Profil = ({ user, enrollments, token }) => {
+  const [editMode, setEditMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [form, setForm] = useState({
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
+  });
+
+  const totalCours = enrollments.length;
+  const coursTermines = enrollments.filter(e => e.total_lessons > 0 && e.completed_lessons === e.total_lessons).length;
+  const progressionGlobale = enrollments.length > 0
+    ? Math.round(enrollments.reduce((acc, e) => {
+        return acc + (e.total_lessons > 0 ? (e.completed_lessons / e.total_lessons) * 100 : 0);
+      }, 0) / enrollments.length)
+    : 0;
+
+  const handleFieldChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const handleToggle = async () => {
+    if (editMode) {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        const res = await fetch(`${API_URL}/auth/me`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ first_name: form.first_name, last_name: form.last_name }),
+        });
+        if (!res.ok) throw new Error('Échec de la sauvegarde');
+        setEditMode(false);
+      } catch (err) {
+        setSaveError("La sauvegarde a échoué, réessayez.");
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      setEditMode(true);
     }
   };
 
-  const saveMethod = async (m) => {
-    await fetch(`${API_URL}/payment-methods/${m.key}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({
-        display_name: m.display_name,
-        logo_url: m.logo_url,
-        receiving_info: m.receiving_info,
-        enabled: m.enabled,
-      }),
-    });
-    setSaveMsg(`✓ ${m.display_name} enregistré.`);
-    setTimeout(() => setSaveMsg(''), 2500);
-  };
-
   return (
-    <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-6">
-      <h3 className="text-sm font-bold text-white">Réglages des moyens de paiement</h3>
-      {saveMsg && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm rounded-lg px-4 py-3">{saveMsg}</div>
-      )}
-      <div className="space-y-4">
-        {methods.map((m) => (
-          <div key={m.key} className="bg-white/[0.03] border border-white/10 rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase text-slate-400">{m.key}</span>
-              <label className="flex items-center gap-2 text-xs text-slate-400">
-                <input type="checkbox" checked={m.enabled} onChange={(e) => updateField(m.key, 'enabled', e.target.checked)} className="accent-primary" />
-                Actif
-              </label>
+    <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', overflowX: 'hidden', padding: '28px 32px', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', margin: '0 0 4px' }}>Mon profil</h1>
+          <p style={{ fontSize: '13px', color: GRAY }}>Informations personnelles et progression</p>
+        </div>
+        <button onClick={handleToggle} disabled={saving} style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          background: BRAND, border: 'none', color: '#fff', borderRadius: '8px',
+          padding: '10px 18px', fontSize: '13px', fontWeight: '600',
+          cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1,
+          whiteSpace: 'nowrap', flexShrink: 0,
+        }}>
+          <Edit2 size={14} /> {saving ? 'Sauvegarde...' : editMode ? 'Sauvegarder' : 'Modifier'}
+        </button>
+      </div>
+      {saveError && <div style={{ color: RED, fontSize: '12px', marginBottom: '16px' }}>{saveError}</div>}
+
+      <div style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: '16px', padding: '28px', marginBottom: '20px', minWidth: 0, boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: BRAND, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '700', color: '#fff', flexShrink: 0 }}>
+            {(user?.first_name || user?.email || '?')[0].toUpperCase()}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#fff' }}>
+              {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.email?.split('@')[0]}
             </div>
-            <div className="grid md:grid-cols-2 gap-3">
-              <input
-                type="text" placeholder="Nom affiché" value={m.display_name}
-                onChange={(e) => updateField(m.key, 'display_name', e.target.value)}
-                className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-              />
-              <input
-                type="text" placeholder="Infos de réception (numéro, email, ID marchand...)" value={m.receiving_info || ''}
-                onChange={(e) => updateField(m.key, 'receiving_info', e.target.value)}
-                className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              {m.logo_url && <img src={m.logo_url} alt="" className="h-8 object-contain bg-white/5 rounded px-2 py-1" />}
-              <label className="bg-white/[0.03] border border-white/10 hover:border-primary/40 text-slate-300 hover:text-primary-light px-3 py-2 rounded-lg text-[10px] font-semibold uppercase cursor-pointer transition-colors">
-                {uploading === m.key ? 'Import...' : 'Choisir un logo'}
-                <input type="file" accept="image/*" onChange={(e) => handleLogoUpload(m.key, e.target.files[0])} className="hidden" disabled={uploading === m.key} />
-              </label>
-              <button onClick={() => saveMethod(m)} className="ml-auto bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-                Enregistrer
-              </button>
-            </div>
+            <div style={{ fontSize: '13px', color: GRAY, marginTop: '4px' }}>{user?.email}</div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '6px' }}>PRÉNOM</div>
+            {editMode ? (
+              <input value={form.first_name} onChange={e => handleFieldChange('first_name', e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${CARD_BORDER}`, borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+            ) : <div style={{ fontSize: '13px', color: '#fff', fontWeight: '500' }}>{user?.first_name || '—'}</div>}
+          </div>
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '6px' }}>NOM</div>
+            {editMode ? (
+              <input value={form.last_name} onChange={e => handleFieldChange('last_name', e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${CARD_BORDER}`, borderRadius: '8px', color: '#fff', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+            ) : <div style={{ fontSize: '13px', color: '#fff', fontWeight: '500' }}>{user?.last_name || '—'}</div>}
+          </div>
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '6px' }}>EMAIL</div>
+            <div style={{ fontSize: '13px', color: '#fff', fontWeight: '500', wordBreak: 'break-word' }}>{user?.email || '—'}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '6px' }}>LANGUE</div>
+            <div style={{ fontSize: '13px', color: '#fff', fontWeight: '500' }}>FR</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '16px' }}>
+        {[
+          { label: 'PARCOURS ACTIFS', value: totalCours, color: BRAND },
+          { label: 'COURS TERMINÉS', value: coursTermines, color: GREEN },
+          { label: 'PROGRESSION GLOBALE', value: `${progressionGlobale}%`, color: '#c9a94e' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: '12px', padding: '20px', minWidth: 0, boxSizing: 'border-box' }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.08em', color: GRAY, marginBottom: '10px' }}>{s.label}</div>
+            <div style={{ fontSize: '28px', fontWeight: '800', color: s.color }}>{s.value}</div>
           </div>
         ))}
       </div>
@@ -120,631 +490,60 @@ const PaymentSettingsSection = ({ authHeaders }) => {
   );
 };
 
-const UserManagementSection = ({ authHeaders, currentUserEmail }) => {
-  const [users, setUsers] = useState([]);
-  const [newAdmin, setNewAdmin] = useState({ email: '', password: '', first_name: '' });
-  const [msg, setMsg] = useState('');
-
-  const loadUsers = () => {
-    fetch(`${API_URL}/admin/users`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : [])
-      .then(setUsers);
-  };
-
-  useEffect(() => { loadUsers(); }, []);
-
-  const changeRole = async (userId, newRole) => {
-    await fetch(`${API_URL}/admin/users/${userId}/role`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ role: newRole }),
-    });
-    loadUsers();
-  };
-
-  const deleteUser = async (userId, email) => {
-    if (email === currentUserEmail) {
-      alert("Tu ne peux pas supprimer ton propre compte.");
-      return;
-    }
-    if (!window.confirm(`Supprimer définitivement le compte de ${email} ?`)) return;
-    await fetch(`${API_URL}/admin/users/${userId}`, { method: 'DELETE', headers: authHeaders });
-    loadUsers();
-  };
-
-  const createAdmin = async (e) => {
-    e.preventDefault();
-    setMsg('');
-    try {
-      const res = await fetch(`${API_URL}/admin/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify(newAdmin),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || 'Erreur lors de la création.');
-      }
-      setMsg('✓ Nouvel administrateur créé.');
-      setNewAdmin({ email: '', password: '', first_name: '' });
-      loadUsers();
-      setTimeout(() => setMsg(''), 3000);
-    } catch (err) {
-      setMsg(err.message);
-    }
-  };
-
-  const formatDate = (isoString) => {
-    return new Date(isoString).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  };
-
-  return (
-    <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-6">
-      <h3 className="text-sm font-bold text-white">Gestion des utilisateurs</h3>
-
-      {msg && (
-        <div className={`text-sm rounded-lg px-4 py-3 ${msg.startsWith('✓') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-          {msg}
-        </div>
-      )}
-
-      <form onSubmit={createAdmin} className="bg-white/[0.03] border border-white/10 rounded-lg p-4 space-y-3">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Ajouter un administrateur</span>
-        <div className="grid md:grid-cols-3 gap-3">
-          <input
-            type="text" placeholder="Prénom" value={newAdmin.first_name}
-            onChange={(e) => setNewAdmin({ ...newAdmin, first_name: e.target.value })}
-            className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-          />
-          <input
-            type="email" placeholder="Email" required value={newAdmin.email}
-            onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-            className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-          />
-          <input
-            type="password" placeholder="Mot de passe" required value={newAdmin.password}
-            onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-            className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-          />
-        </div>
-        <button type="submit" className="bg-gradient-to-r from-primary to-primary-dark text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-          Créer l'administrateur
-        </button>
-      </form>
-
-      <table className="w-full text-xs text-left">
-        <thead className="bg-white/[0.03] text-slate-500 uppercase">
-          <tr>
-            <th className="p-3">Nom</th>
-            <th className="p-3">Email</th>
-            <th className="p-3">Rôle</th>
-            <th className="p-3">Inscrit le</th>
-            <th className="p-3">Action</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/5">
-          {users.map(u => (
-            <tr key={u.id}>
-              <td className="p-3 text-slate-300">{u.first_name || '—'} {u.last_name || ''}</td>
-              <td className="p-3 text-slate-400">{u.email}</td>
-              <td className="p-3">
-                <select
-                  value={u.role}
-                  onChange={(e) => changeRole(u.id, e.target.value)}
-                  className="bg-white/[0.03] border border-white/10 text-white text-[11px] px-2 py-1 rounded outline-none"
-                >
-                  <option value="student">student</option>
-                  <option value="admin">admin</option>
-                </select>
-              </td>
-              <td className="p-3 text-slate-500">{formatDate(u.created_at)}</td>
-              <td className="p-3">
-                <button onClick={() => deleteUser(u.id, u.email)} className="text-red-400 hover:text-red-300 font-semibold uppercase text-[11px]">
-                  Supprimer
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-const AdminDashboard = () => {
+/* ===== DASHBOARD PRINCIPAL ===== */
+const Dashboard = () => {
   const { token, loading, user } = useContext(AuthContext);
+  const { language } = useContext(LanguageContext);
   const navigate = useNavigate();
-  const authHeaders = { Authorization: `Bearer ${token}` };
-
-  const [summary, setSummary] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [selectedCourseId, setSelectedCourseId] = useState('new');
-  const [courseToEdit, setCourseToEdit] = useState(EMPTY_COURSE);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
-  const [uploadingThumb, setUploadingThumb] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(null);
+  const [activeTab, setActiveTab] = useState('espace');
+  const [enrollments, setEnrollments] = useState([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(true);
 
   useEffect(() => {
     if (!loading && !token) navigate('/login');
   }, [token, loading]);
 
-  const loadCourses = async () => {
-    const res = await fetch(`${API_URL}/courses/all`, { headers: authHeaders });
-    const data = res.ok ? await res.json() : [];
-    setCourses(data);
-    return data;
-  };
-
   useEffect(() => {
     if (!token) return;
-
-    fetch(`${API_URL}/payments/admin/summary`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : null)
-      .then(setSummary);
-
-    fetch(`${API_URL}/contact/`, { headers: authHeaders })
+    fetch(`${API_URL}/auth/me/enrollments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then(res => res.ok ? res.json() : [])
-      .then(setMessages);
-
-    fetch(`${API_URL}/admin/transactions`, { headers: authHeaders })
-      .then(res => res.ok ? res.json() : [])
-      .then(setTransactions);
-
-    loadCourses();
+      .then(setEnrollments)
+      .finally(() => setLoadingEnrollments(false));
   }, [token]);
 
-  const handleCourseSelect = (value) => {
-    setSelectedCourseId(value);
-    if (value === 'new') {
-      setCourseToEdit(EMPTY_COURSE);
-    } else {
-      const c = courses.find(c => c.id === parseInt(value));
-      setCourseToEdit(c);
-    }
-  };
-
-  const handleThumbnailUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploadingThumb(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API_URL}/uploads/image`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: formData,
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setCourseToEdit({ ...courseToEdit, thumbnail_url: `${API_URL}${data.url}` });
-    } catch {
-      alert("Échec de l'import de l'image.");
-    } finally {
-      setUploadingThumb(false);
-    }
-  };
-
-  const handleVideoUpload = async (lessonId, file) => {
-    if (!file) return;
-    setUploadingVideo(lessonId);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API_URL}/uploads/video`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: formData,
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      updateLesson(lessonId, 'video_url', `${API_URL}${data.url}`);
-    } catch {
-      alert("Échec de l'import de la vidéo.");
-    } finally {
-      setUploadingVideo(null);
-    }
-  };
-
-  const addLesson = () => {
-    const uniqueId = `new-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-    setCourseToEdit({
-      ...courseToEdit,
-      lessons: [...(courseToEdit.lessons || []), { id: uniqueId, title_fr: '', title_en: '', duration: '00:00', video_url: '' }]
-    });
-  };
-
-  const updateLesson = (lessonId, field, value) => {
-    setCourseToEdit({
-      ...courseToEdit,
-      lessons: courseToEdit.lessons.map(l => l.id === lessonId ? { ...l, [field]: value } : l)
-    });
-  };
-
-  const removeLesson = async (lessonId) => {
-    if (typeof lessonId === 'number' && selectedCourseId !== 'new') {
-      await fetch(`${API_URL}/courses/${selectedCourseId}/lessons/${lessonId}`, {
-        method: 'DELETE',
-        headers: authHeaders,
-      });
-    }
-    setCourseToEdit({ ...courseToEdit, lessons: courseToEdit.lessons.filter(l => l.id !== lessonId) });
-  };
-
-  const saveCourse = async (status) => {
-    setIsSaving(true);
-    setSaveMessage('');
-    const payload = {
-      title_fr: courseToEdit.title_fr,
-      title_en: courseToEdit.title_en,
-      description_fr: courseToEdit.description_fr,
-      description_en: courseToEdit.description_en,
-      price: parseInt(courseToEdit.price) || 0,
-      is_free: courseToEdit.is_free,
-      domain: courseToEdit.domain,
-      level: courseToEdit.level,
-      status,
-      thumbnail_url: courseToEdit.thumbnail_url,
-      instructor_name: courseToEdit.instructor_name,
-      rating: courseToEdit.rating || 0,
-      reviews_count: courseToEdit.reviews_count || 0,
-      students_count: courseToEdit.students_count || 0,
-      is_bestseller: courseToEdit.is_bestseller || false,
-    };
-
-    try {
-      let savedCourse;
-      if (selectedCourseId === 'new') {
-        const res = await fetch(`${API_URL}/courses/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify(payload),
-        });
-        savedCourse = await res.json();
-      } else {
-        const res = await fetch(`${API_URL}/courses/${selectedCourseId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', ...authHeaders },
-          body: JSON.stringify(payload),
-        });
-        savedCourse = await res.json();
-      }
-
-      for (const lesson of courseToEdit.lessons || []) {
-        if (typeof lesson.id === 'string' && lesson.id.startsWith('new-')) {
-          await fetch(`${API_URL}/courses/${savedCourse.id}/lessons`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...authHeaders },
-            body: JSON.stringify({ title_fr: lesson.title_fr, title_en: lesson.title_en, duration: lesson.duration, video_url: lesson.video_url, order: 0 }),
-          });
-        }
-      }
-
-      // Recharge la liste des parcours ET les données fraîches du parcours qu'on vient de sauvegarder,
-      // pour que les leçons affichées aient bien leurs vrais identifiants venant du serveur (plus de doublons possibles).
-      const freshCourses = await loadCourses();
-      const freshCourse = freshCourses.find(c => c.id === savedCourse.id);
-
-      setSaveMessage(status === 'published' ? '✓ Parcours publié.' : '✓ Brouillon enregistré.');
-      setSelectedCourseId(savedCourse.id.toString());
-      if (freshCourse) setCourseToEdit(freshCourse);
-      setTimeout(() => setSaveMessage(''), 3000);
-    } catch {
-      setSaveMessage('Erreur lors de la sauvegarde.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const deleteCourse = async () => {
-    if (selectedCourseId === 'new') return;
-    if (!window.confirm(`Supprimer définitivement "${courseToEdit.title_fr}" ? Cette action est irréversible.`)) return;
-
-    await fetch(`${API_URL}/courses/${selectedCourseId}`, { method: 'DELETE', headers: authHeaders });
-    loadCourses();
-    setSelectedCourseId('new');
-    setCourseToEdit(EMPTY_COURSE);
-  };
-
-  const resolveMessage = async (id) => {
-    await fetch(`${API_URL}/contact/${id}/resolve`, { method: 'PUT', headers: authHeaders });
-    setMessages(messages.map(m => m.id === id ? { ...m, resolved: true } : m));
-  };
-
-  const formatDate = (isoString) => {
-    return new Date(isoString).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  };
-
   if (loading || !token) {
-    return <div className="min-h-screen flex items-center justify-center text-muted text-sm">Chargement...</div>;
+    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: GRAY, fontSize: '14px', background: BG }}>Chargement...</div>;
   }
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'espace': return <MonEspace enrollments={enrollments} loadingEnrollments={loadingEnrollments} user={user} />;
+      case 'parcours': return <MesParcours enrollments={enrollments} loadingEnrollments={loadingEnrollments} />;
+      case 'certificats': return <MesCertificats />;
+      case 'profil': return <Profil user={user} enrollments={enrollments} token={token} />;
+      default: return <MonEspace enrollments={enrollments} loadingEnrollments={loadingEnrollments} user={user} />;
+    }
+  };
+
   return (
-    <div className="min-h-screen text-slate-200">
-      <Navbar />
-
-      <div className="max-w-5xl mx-auto px-6 py-12 space-y-10">
-
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/10 pb-8">
-          <div>
-            <span className="text-[11px] font-semibold text-primary-light tracking-wide uppercase">Console de gestion</span>
-            <h1 className="font-display text-2xl font-bold text-white mt-1">Panneau d'administration</h1>
-          </div>
-          {selectedCourseId !== 'new' && (
-            <span className={`text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full ${
-              courseToEdit.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
-            }`}>
-              {courseToEdit.status === 'published' ? 'Publié' : 'Brouillon'}
-            </span>
-          )}
-        </div>
-
-        {summary && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="bg-surface border border-white/10 rounded-2xl p-6">
-              <p className="text-[11px] uppercase text-slate-500 font-semibold tracking-wide">Chiffre d'affaires total</p>
-              <p className="font-display text-xl font-bold mt-2 text-white">${summary.total_revenue.toLocaleString()}</p>
-            </div>
-            <div className="bg-surface border border-white/10 rounded-2xl p-6">
-              <p className="text-[11px] uppercase text-slate-500 font-semibold tracking-wide">Meilleure vente</p>
-              <p className="text-sm mt-2 font-bold text-white">{summary.top_course.title || '—'} · {summary.top_course.sales} ventes</p>
-            </div>
-            <div className="bg-surface border border-white/10 rounded-2xl p-6">
-              <p className="text-[11px] uppercase text-slate-500 font-semibold tracking-wide">Répartition paiement</p>
-              <p className="text-sm mt-2 font-bold text-white">
-                {Object.entries(summary.payment_breakdown).map(([k, v]) => `${k.toUpperCase()} ${v}`).join(' · ') || 'Aucune vente'}
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-surface border border-white/10 rounded-2xl p-6 space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h3 className="text-sm font-bold text-white">Gestion des parcours</h3>
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedCourseId}
-                onChange={(e) => handleCourseSelect(e.target.value)}
-                className="bg-white/[0.03] border border-white/10 text-white text-xs px-3 py-2 rounded-lg outline-none"
-              >
-                <option value="new">+ Nouveau parcours</option>
-                {courses.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.title_fr} {c.status === 'draft' ? '(brouillon)' : ''}
-                  </option>
-                ))}
-              </select>
-              {selectedCourseId !== 'new' && (
-                <button onClick={deleteCourse} className="text-red-400 hover:text-red-300 text-xs font-semibold uppercase">
-                  Supprimer
-                </button>
-              )}
-            </div>
-          </div>
-
-          {saveMessage && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm rounded-lg px-4 py-3">
-              {saveMessage}
-            </div>
-          )}
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <input
-              type="text" placeholder="Titre (Français)" value={courseToEdit.title_fr || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, title_fr: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-            />
-            <input
-              type="text" placeholder="Title (English)" value={courseToEdit.title_en || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, title_en: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-            />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <textarea
-              placeholder="Description (Français)" rows="3" value={courseToEdit.description_fr || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, description_fr: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors resize-none"
-            ></textarea>
-            <textarea
-              placeholder="Description (English)" rows="3" value={courseToEdit.description_en || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, description_en: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors resize-none"
-            ></textarea>
-          </div>
-
-          <input
-            type="text" placeholder="Nom du formateur" value={courseToEdit.instructor_name || ''}
-            onChange={(e) => setCourseToEdit({ ...courseToEdit, instructor_name: e.target.value })}
-            className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-          />
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <select
-              value={courseToEdit.domain || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, domain: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none"
-            >
-              <option value="">Choisir un domaine</option>
-              {DOMAINS.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
-            </select>
-            <select
-              value={courseToEdit.level || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, level: e.target.value })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none"
-            >
-              <option value="">Choisir un niveau</option>
-              {LEVELS.map(l => <option key={l.key} value={l.key}>{l.label}</option>)}
-            </select>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <label className="flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white cursor-pointer">
-              <input
-                type="checkbox" checked={courseToEdit.is_free || false}
-                onChange={(e) => setCourseToEdit({ ...courseToEdit, is_free: e.target.checked })}
-                className="accent-primary"
-              />
-              Parcours gratuit
-            </label>
-
-            {!courseToEdit.is_free && (
-              <input
-                type="number" placeholder="Prix ($)" value={courseToEdit.price || ''}
-                onChange={(e) => setCourseToEdit({ ...courseToEdit, price: e.target.value })}
-                className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-              />
-            )}
-
-            <label className="flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white cursor-pointer">
-              <input
-                type="checkbox" checked={courseToEdit.is_bestseller || false}
-                onChange={(e) => setCourseToEdit({ ...courseToEdit, is_bestseller: e.target.checked })}
-                className="accent-amber-400"
-              />
-              Meilleure vente
-            </label>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <input
-              type="number" step="0.1" min="0" max="5" placeholder="Note (ex: 4.7)"
-              value={courseToEdit.rating ? (courseToEdit.rating / 10).toFixed(1) : ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, rating: Math.round(parseFloat(e.target.value || 0) * 10) })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-            />
-            <input
-              type="number" placeholder="Nombre d'avis"
-              value={courseToEdit.reviews_count || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, reviews_count: parseInt(e.target.value) || 0 })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-            />
-            <input
-              type="number" placeholder="Nombre d'étudiants"
-              value={courseToEdit.students_count || ''}
-              onChange={(e) => setCourseToEdit({ ...courseToEdit, students_count: parseInt(e.target.value) || 0 })}
-              className="bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-sm text-white outline-none focus:border-primary/50 transition-colors"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Image de couverture</label>
-            <div className="flex items-center gap-4">
-              {courseToEdit.thumbnail_url && (
-                <img src={courseToEdit.thumbnail_url} alt="" className="w-24 h-16 object-cover rounded-lg border border-white/10" />
-              )}
-              <label className="bg-white/[0.03] border border-white/10 hover:border-primary/40 text-slate-300 hover:text-primary-light px-4 py-2.5 rounded-lg text-xs font-semibold uppercase cursor-pointer transition-colors">
-                {uploadingThumb ? 'Import en cours...' : 'Choisir une image sur mon PC'}
-                <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="hidden" disabled={uploadingThumb} />
-              </label>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-4 border-t border-white/10">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                Programme ({(courseToEdit.lessons || []).length} leçons)
-              </span>
-              <button onClick={addLesson} className="text-xs text-primary-light hover:text-white font-semibold">+ Ajouter une leçon</button>
-            </div>
-            {(courseToEdit.lessons || []).map((lesson) => (
-              <div key={lesson.id} className="bg-white/[0.03] p-4 rounded-lg border border-white/10 space-y-3">
-                <div className="grid md:grid-cols-2 gap-3">
-                  <input
-                    className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-                    value={lesson.title_fr || ''} onChange={(e) => updateLesson(lesson.id, 'title_fr', e.target.value)} placeholder="Titre de la leçon (FR)"
-                  />
-                  <input
-                    className="bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-                    value={lesson.title_en || ''} onChange={(e) => updateLesson(lesson.id, 'title_en', e.target.value)} placeholder="Lesson title (EN)"
-                  />
-                </div>
-                <div className="grid md:grid-cols-12 gap-3 items-center">
-                  <input
-                    className="md:col-span-8 bg-white/[0.03] border border-white/10 px-3 py-2 text-xs rounded-lg text-white outline-none focus:border-primary/50"
-                    value={lesson.duration} onChange={(e) => updateLesson(lesson.id, 'duration', e.target.value)} placeholder="00:00"
-                  />
-                  <label className="md:col-span-3 bg-white/[0.03] border border-white/10 hover:border-primary/40 text-slate-300 hover:text-primary-light px-3 py-2 rounded-lg text-[10px] font-semibold uppercase cursor-pointer text-center transition-colors">
-                    {uploadingVideo === lesson.id ? 'Import...' : lesson.video_url ? '✓ Vidéo importée' : 'Choisir une vidéo'}
-                    <input type="file" accept="video/*" onChange={(e) => handleVideoUpload(lesson.id, e.target.files[0])} className="hidden" disabled={uploadingVideo === lesson.id} />
-                  </label>
-                  <button onClick={() => removeLesson(lesson.id)} className="md:col-span-1 text-red-400 hover:text-red-300 text-xs font-bold text-center">✕</button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-3 pt-4 border-t border-white/10">
-            <button onClick={() => saveCourse('draft')} disabled={isSaving} className="border border-white/10 hover:border-white/30 text-slate-300 hover:text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">
-              Enregistrer comme brouillon
-            </button>
-            <button onClick={() => saveCourse('published')} disabled={isSaving} className="bg-gradient-to-r from-primary to-primary-dark hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-shadow">
-              {isSaving ? 'Publication...' : 'Publier'}
-            </button>
-          </div>
-        </div>
-
-        <ExerciseManager courseId={selectedCourseId} authHeaders={authHeaders} />
-
-        <SubmissionsGrading authHeaders={authHeaders} />
-
-        <PaymentSettingsSection authHeaders={authHeaders} />
-
-        <UserManagementSection authHeaders={authHeaders} currentUserEmail={user?.email} />
-
-        <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-white/10 flex justify-between items-center">
-            <h3 className="text-sm font-bold text-white">Transactions ({transactions.length})</h3>
-          </div>
-          <table className="w-full text-xs text-left">
-            <thead className="bg-white/[0.03] text-slate-500 uppercase">
-              <tr><th className="p-4">Étudiant</th><th className="p-4">Parcours</th><th className="p-4">Moyen</th><th className="p-4">Date</th></tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {transactions.length > 0 ? transactions.map(t => (
-                <tr key={t.id}>
-                  <td className="p-4 text-slate-300">{t.user_email}</td>
-                  <td className="p-4 text-slate-400">{t.course_title}</td>
-                  <td className="p-4 text-primary-light uppercase font-semibold">{t.payment_method || 'Gratuit'}</td>
-                  <td className="p-4 text-slate-500">{formatDate(t.created_at)}</td>
-                </tr>
-              )) : (
-                <tr><td colSpan="4" className="p-6 text-center text-slate-600">Aucune transaction pour l'instant.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="bg-surface border border-white/10 rounded-2xl overflow-hidden">
-          <div className="p-6 border-b border-white/10"><h3 className="text-sm font-bold text-white">Messages support</h3></div>
-          <table className="w-full text-xs text-left">
-            <thead className="bg-white/[0.03] text-slate-500 uppercase">
-              <tr><th className="p-4">Utilisateur</th><th className="p-4">Message</th><th className="p-4">Statut</th></tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {messages.map(m => (
-                <tr key={m.id}>
-                  <td className="p-4 text-slate-300">{m.email}</td>
-                  <td className="p-4 text-slate-400">{m.subject}</td>
-                  <td className="p-4">
-                    {m.resolved ? (
-                      <span className="text-emerald-400 uppercase text-[11px] font-semibold">Traité</span>
-                    ) : (
-                      <button onClick={() => resolveMessage(m.id)} className="text-primary-light hover:text-white font-semibold uppercase text-[11px]">Marquer traité</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: BG, color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      <Header />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minWidth: 0 }}>
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+        {renderContent()}
       </div>
+      <button style={{
+        position: 'fixed', bottom: '20px', right: '20px', zIndex: 50,
+        background: 'rgba(20,26,42,0.9)', border: `1px solid ${CARD_BORDER}`,
+        color: GRAY, borderRadius: '999px', padding: '8px 16px',
+        fontSize: '12px', cursor: 'pointer',
+      }}>
+        ← Vue admin
+      </button>
     </div>
   );
 };
-export default AdminDashboard;
+
+export default Dashboard;
