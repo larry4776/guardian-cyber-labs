@@ -24,17 +24,12 @@ const AdminSidebar = () => {
 
   return (
     <div style={{
-      width: '240px',
-      minWidth: '240px',
-      height: '100vh',
-      position: 'sticky',
-      top: 0,
+      width: '240px', minWidth: '240px', height: '100vh',
+      position: 'sticky', top: 0,
       background: 'rgba(255,255,255,0.03)',
       borderRight: '1px solid rgba(255,255,255,0.07)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto',
-      flexShrink: 0,
+      display: 'flex', flexDirection: 'column',
+      overflowY: 'auto', flexShrink: 0,
     }}>
 
       {/* Logo */}
@@ -45,13 +40,7 @@ const AdminSidebar = () => {
             <polygon points="16,8 24,12 24,20 16,24 8,20 8,12" stroke="#3b6df0" strokeWidth="1" fill="none" />
             <circle cx="16" cy="16" r="2.5" fill="#3b6df0" />
           </svg>
-          <span style={{
-            fontSize: '12px',
-            fontWeight: '800',
-            letterSpacing: '0.08em',
-            color: '#fff',
-            whiteSpace: 'nowrap',
-          }}>
+          <span style={{ fontSize: '12px', fontWeight: '800', letterSpacing: '0.08em', color: '#fff', whiteSpace: 'nowrap' }}>
             GUARDIAN <span style={{ color: '#3b6df0' }}>CYBER LABS</span>
           </span>
         </div>
@@ -63,7 +52,7 @@ const AdminSidebar = () => {
         }}>
           <span style={{ fontSize: '11px', color: '#8A93A6', fontWeight: '600', letterSpacing: '0.05em' }}>ADMIN</span>
           <button
-            onClick={() => window.open('/#/dashboard', '_blank')}
+            onClick={() => window.open('/guardian-cyber-labs/#/dashboard', '_blank')}
             style={{ fontSize: '10px', color: '#4a7fc2', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}>
             Changer
           </button>
@@ -75,16 +64,15 @@ const AdminSidebar = () => {
         {SIDEBAR_ITEMS.map(({ label, icon: Icon, path, badge }) => {
           const active = isActive(path);
           return (
-            <button key={path} onClick={() => navigate(path)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 12px', borderRadius: '8px', border: 'none',
-                background: active ? 'rgba(59,109,240,0.2)' : 'transparent',
-                color: active ? '#fff' : '#8A93A6',
-                cursor: 'pointer', textAlign: 'left', width: '100%',
-                fontSize: '13px', fontWeight: active ? '600' : '400',
-                borderLeft: active ? '2px solid #3b6df0' : '2px solid transparent',
-              }}>
+            <button key={path} onClick={() => navigate(path)} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 12px', borderRadius: '8px', border: 'none',
+              background: active ? 'rgba(59,109,240,0.2)' : 'transparent',
+              color: active ? '#fff' : '#8A93A6',
+              cursor: 'pointer', textAlign: 'left', width: '100%',
+              fontSize: '13px', fontWeight: active ? '600' : '400',
+              borderLeft: active ? '2px solid #3b6df0' : '2px solid transparent',
+            }}>
               <Icon size={16} />
               <span style={{ flex: 1 }}>{label}</span>
               {badge && (
