@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/guardian-cyber-labs/static/css/main.14860864.css",
-    "main.js": "/guardian-cyber-labs/static/js/main.2b7aa7f2.js",
+    "main.js": "/guardian-cyber-labs/static/js/main.4ffee2ab.js",
     "index.html": "/guardian-cyber-labs/index.html",
     "main.14860864.css.map": "/guardian-cyber-labs/static/css/main.14860864.css.map",
-    "main.2b7aa7f2.js.map": "/guardian-cyber-labs/static/js/main.2b7aa7f2.js.map"
+    "main.4ffee2ab.js.map": "/guardian-cyber-labs/static/js/main.4ffee2ab.js.map"
   },
   "entrypoints": [
     "static/css/main.14860864.css",
-    "static/js/main.2b7aa7f2.js"
+    "static/js/main.4ffee2ab.js"
   ]
 }
