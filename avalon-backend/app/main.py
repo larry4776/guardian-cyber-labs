@@ -8,13 +8,24 @@ from app.routers import auth, courses, payments, contact, uploads, admin, paymen
 
 Base.metadata.create_all(bind=engine)
 
+# Seed automatique au démarrage
+try:
+    import seed
+    seed.run()
+except Exception as e:
+    print(f"Seed ignoré : {e}")
+
 os.makedirs("app/static/uploads", exist_ok=True)
 
 app = FastAPI(title="Avalon Secure Academy API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://guardian-cyber-labs.netlify.app"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://larry4776.github.io",
+        "https://guardian-cyber-labs.netlify.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
